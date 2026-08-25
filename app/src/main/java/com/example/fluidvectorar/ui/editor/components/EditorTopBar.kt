@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor.canvas.view
+package com.example.fluidvectorar.ui.editor.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

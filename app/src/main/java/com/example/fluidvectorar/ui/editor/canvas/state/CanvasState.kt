@@ -10,13 +10,13 @@ import androidx.compose.ui.unit.IntSize
 import com.example.fluidvectorar.domain.model.BrushStyle
 import com.example.fluidvectorar.domain.model.StrokeData
 
-enum class EditorMode {
+enum class CanvasMode {
     DRAW,
     PAN_ZOOM
 }
 
 class CanvasState {
-    var activeMode by mutableStateOf(EditorMode.DRAW)
+    var activeMode by mutableStateOf(CanvasMode.DRAW)
 
     // Matrix Transformations
     var scale by mutableFloatStateOf(1f)

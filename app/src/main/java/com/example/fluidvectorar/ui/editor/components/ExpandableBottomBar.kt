@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor.canvas.view
+package com.example.fluidvectorar.ui.editor.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -37,7 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
-import com.example.fluidvectorar.ui.editor.canvas.state.EditorMode
+import com.example.fluidvectorar.ui.editor.canvas.state.CanvasMode
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
 @Composable
@@ -45,7 +45,7 @@ fun ExpandableBottomToolbar(
     canvasState: CanvasState,
     modifier: Modifier = Modifier
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(true) }
 
     Card(
         modifier = modifier
@@ -78,9 +78,9 @@ fun ExpandableBottomToolbar(
                     }
 
                     // Tool 2: Pan/Draw Mode Switcher
-                    val isDraw = canvasState.activeMode == EditorMode.DRAW
+                    val isDraw = canvasState.activeMode == CanvasMode.DRAW
                     IconButton(
-                        onClick = { canvasState.activeMode = if (isDraw) EditorMode.PAN_ZOOM else EditorMode.DRAW },
+                        onClick = { canvasState.activeMode = if (isDraw) CanvasMode.PAN_ZOOM else CanvasMode.DRAW },
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
                         )

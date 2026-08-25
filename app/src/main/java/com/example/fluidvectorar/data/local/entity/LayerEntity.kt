@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 
 @Entity(
@@ -20,7 +21,7 @@ import androidx.room.PrimaryKey
 )
 data class LayerEntity(
     @PrimaryKey
-    val id: String,
+    val id: String = UUID.randomUUID().toString(),
     val projectId: String,
     val layerIndex: Int,
     val name: String,
@@ -28,5 +29,5 @@ data class LayerEntity(
     val blendMode: String = "NORMAL",
     val isVisible: Boolean = true,
     val isLocked: Boolean = false,
-    val strokesJsonPath: String // Local file path where JSON/Binary path data is stored
+    val strokesJsonPath: String
 )

@@ -1,6 +1,5 @@
 package com.example.fluidvectorar.ui.editor.canvas.view
 
-import android.graphics.Canvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fluidvectorar.ui.editor.canvas.helper.BezierSmoother
 import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
-import com.example.fluidvectorar.ui.editor.canvas.state.EditorMode
+import com.example.fluidvectorar.ui.editor.canvas.state.CanvasMode
 
 @Composable
 fun FluidCanvas(
@@ -36,7 +35,7 @@ fun FluidCanvas(
                 rotationZ = canvasState.rotation
             )
             .pointerInput(canvasState.activeMode) {
-                if (canvasState.activeMode == EditorMode.PAN_ZOOM) {
+                if (canvasState.activeMode == CanvasMode.PAN_ZOOM) {
                     detectTransformGestures { _, pan, zoom, rotation ->
                         // Uses Clamped Matrix Logic
                         canvasState.updateTransformations(
