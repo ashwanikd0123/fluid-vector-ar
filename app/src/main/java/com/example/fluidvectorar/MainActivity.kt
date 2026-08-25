@@ -16,6 +16,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
+import com.example.fluidvectorar.ui.editor.canvas.state.EditorMode
+import com.example.fluidvectorar.ui.editor.canvas.view.FluidCanvas
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +37,11 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
             ) {
                 composable<AppRoute.EditorStudio> {
-
+                    val canvasState = CanvasState()
+                    canvasState.activeMode = EditorMode.PAN_ZOOM
+                    FluidCanvas(
+                        canvasState = canvasState
+                    )
                 }
             }
         }
