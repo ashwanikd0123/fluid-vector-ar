@@ -38,9 +38,12 @@ fun FluidCanvas(
             .pointerInput(canvasState.activeMode) {
                 if (canvasState.activeMode == EditorMode.PAN_ZOOM) {
                     detectTransformGestures { _, pan, zoom, rotation ->
-                        canvasState.scale = (canvasState.scale * zoom).coerceIn(0.1f, 50f)
-                        canvasState.rotation += rotation
-                        canvasState.offset += pan
+                        // Uses Clamped Matrix Logic
+                        canvasState.updateTransformations(
+                            zoomFactor = zoom,
+                            panChange = pan,
+                            rotationChange = rotation
+                        )
                     }
                 } else {
                     awaitPointerEventScope {

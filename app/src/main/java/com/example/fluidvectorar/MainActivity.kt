@@ -20,7 +20,9 @@ import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
 import com.example.fluidvectorar.ui.editor.canvas.state.EditorMode
 import com.example.fluidvectorar.ui.editor.canvas.view.FluidCanvas
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,10 +40,14 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable<AppRoute.EditorStudio> {
                     val canvasState = CanvasState()
-                    canvasState.activeMode = EditorMode.PAN_ZOOM
+                    canvasState.activeMode = EditorMode.DRAW
                     FluidCanvas(
                         canvasState = canvasState
                     )
+                }
+
+                composable<AppRoute.Home> {
+
                 }
             }
         }

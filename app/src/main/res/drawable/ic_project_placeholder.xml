@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Card -->
+    <path
+        android:fillColor="#F0F4F8"
+        android:pathData="M16,12 L104,12 A8,8 0,0 1 112,20 L112,100 A8,8 0,0 1 104,108 L16,108 A8,8 0,0 1 8,100 L8,20 A8,8 0,0 1 16,12 Z" />
+
+    <!-- Isometric Grid Lines (Background feel) -->
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1"
+        android:pathData="M8,40 L112,40 M8,68 L112,68 M8,96 L112,96 M40,12 L40,108 M68,12 L68,108 M96,12 L96,108" />
+
+    <!-- Stylized Vector Curve Line (Stroke Artwork Placeholder) -->
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 30,80 C 45,30 65,95 90,40" />
+
+    <!-- Vector Anchor Control Points (AR Vector Feeling) -->
+    <path
+        android:fillColor="#4338CA"
+        android:pathData="M30,80m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#4338CA"
+        android:pathData="M90,40m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+
+    <!-- Canvas Pencil Tool Indicator -->
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M78,82 L90,94 L84,96 L76,88 Z M91,79 L95,83 L92,86 L88,82 Z" />
+</vector>
