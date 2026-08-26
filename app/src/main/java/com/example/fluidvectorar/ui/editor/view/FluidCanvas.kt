@@ -1,5 +1,6 @@
 package com.example.fluidvectorar.ui.editor.view
 
+import android.graphics.Matrix
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.example.fluidvectorar.domain.model.BrushStyle
 import com.example.fluidvectorar.domain.model.LayerState
@@ -38,13 +41,9 @@ fun FluidCanvas(
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .graphicsLayer(
-                scaleX = canvasState.scale,
-                scaleY = canvasState.scale,
-                translationX = canvasState.offset.x,
-                translationY = canvasState.offset.y,
-                rotationZ = canvasState.rotation
-            )
+            .onSizeChanged { size ->
+                canvasState.viewportSize = size
+            }
             .pointerInput(activeMode) {
                 if (activeMode == CanvasMode.PAN_ZOOM) {
                     detectTransformGestures { _, pan, zoom, rotation ->
@@ -77,8 +76,10 @@ fun FluidCanvas(
                                     // Inverse Transform Screen Point to Canvas World Point
                                     val worldPoint = screenToWorldCoordinates(
                                         screenPoint = adjustedScreenTouch,
+                                        viewportSize = canvasState.viewportSize, // Pivot size
                                         scale = canvasState.scale,
-                                        offset = canvasState.offset
+                                        offset = canvasState.offset,
+                                        rotation = canvasState.rotation // Rotation added!
                                     )
 
                                     canvasState.currentPathPoints.add(worldPoint)
@@ -108,6 +109,13 @@ fun FluidCanvas(
                     }
                 }
             }
+            .graphicsLayer(
+                scaleX = canvasState.scale,
+                scaleY = canvasState.scale,
+                translationX = canvasState.offset.x,
+                translationY = canvasState.offset.y,
+                rotationZ = canvasState.rotation
+            )
     ) {
         // backgroung grid
         if (isGridEnabled) {
@@ -167,6 +175,39 @@ fun FluidCanvas(
             }
         }
     }
+}
+
+private fun screenToWorldCoordinates(
+    screenPoint: Offset,
+    viewportSize: IntSize,
+    scale: Float,
+    offset: Offset,
+    rotation: Float
+): Offset {
+    if (viewportSize == IntSize.Zero) return screenPoint
+
+    // Compose ka default pivot (center point) jahan se zoom/rotate hota hai
+    val pivotX = viewportSize.width / 2f
+    val pivotY = viewportSize.height / 2f
+
+    val matrix = Matrix()
+
+    // Exact Compose wali sequence apply karo:
+    // 1. Center se Scale
+    matrix.postScale(scale, scale, pivotX, pivotY)
+    // 2. Center se Rotate
+    matrix.postRotate(rotation, pivotX, pivotY)
+    // 3. Offset Translation apply karo
+    matrix.postTranslate(offset.x, offset.y)
+
+    // Ab is Matrix ko Invert (Reverse) kar do taaki Screen Point -> World Point ban jaye
+    val inverseMatrix = Matrix()
+    matrix.invert(inverseMatrix)
+
+    val points = floatArrayOf(screenPoint.x, screenPoint.y)
+    inverseMatrix.mapPoints(points)
+
+    return Offset(points[0], points[1])
 }
 
 private fun screenToWorldCoordinates(
