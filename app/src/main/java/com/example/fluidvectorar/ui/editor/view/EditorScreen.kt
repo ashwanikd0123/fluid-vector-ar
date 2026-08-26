@@ -17,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.fluidvectorar.domain.model.LayerState
+import com.example.fluidvectorar.domain.model.StrokeData
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
 import com.example.fluidvectorar.ui.editor.components.ExpandableBottomToolbar
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
@@ -38,8 +40,10 @@ fun EditorScreen(
 
 @Composable
 fun EditorScreenView(
-    onBackClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onBackClick: () -> Unit = {},
+    onSaveClick: () -> Unit = {},
+    layers: List<LayerState> = emptyList(),
+    spitStroke: (StrokeData) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -95,11 +99,7 @@ fun EditorScreenView(
 @Preview
 @Composable
 fun EditorScreenViewPreview() {
-    val canvasState = CanvasGestureState()
     FluidVectorARTheme {
-        EditorScreenView(
-            {},
-            {}
-        )
+        EditorScreenView()
     }
 }

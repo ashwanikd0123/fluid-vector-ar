@@ -33,10 +33,7 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
             ) {
                 composable<AppRoute.EditorStudio> {
-                    EditorScreenView(
-                        {},
-                        {}
-                    )
+                    EditorScreenView()
                 }
 
                 composable<AppRoute.Home> {
