@@ -17,5 +17,5 @@ interface LayerEntityDao {
     suspend fun deleteLayer(layer: LayerEntity): Int
 
     @Query("SELECT * FROM layers WHERE projectId = :id ORDER BY layerIndex")
-    fun getAllLayersRelatedToProject(id: String): List<LayerEntity>
+    suspend fun getAllLayersInProject(id: String): List<LayerEntity>
 }

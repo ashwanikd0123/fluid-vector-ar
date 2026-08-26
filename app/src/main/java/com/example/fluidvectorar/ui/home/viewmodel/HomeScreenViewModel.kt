@@ -2,8 +2,10 @@ package com.example.fluidvectorar.ui.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fluidvectorar.data.local.entity.LayerEntity
 import com.example.fluidvectorar.data.local.entity.ProjectEntity
 import com.example.fluidvectorar.data.repository.DrawingRepository
+import com.example.fluidvectorar.data.repository.StorageRepository
 import com.example.fluidvectorar.ui.home.state.HomeScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -11,10 +13,14 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeScreenViewModel @Inject constructor(val drawingRepo : DrawingRepository) : ViewModel() {
+class HomeScreenViewModel @Inject constructor(
+    val drawingRepo : DrawingRepository,
+    val storageRepo: StorageRepository
+) : ViewModel() {
     var homeScreenState = HomeScreenState()
 
     init {
@@ -33,6 +39,9 @@ class HomeScreenViewModel @Inject constructor(val drawingRepo : DrawingRepositor
             val affectedRows = withContext(Dispatchers.IO) {
                 drawingRepo.deleteProject(project)
             }
+            withContext(Dispatchers.IO) {
+                storageRepo.deleteProjectFiles(project.id)
+            }
             homeScreenState.isDeletingProject = false
         }
     }
@@ -49,8 +58,21 @@ class HomeScreenViewModel @Inject constructor(val drawingRepo : DrawingRepositor
                 updatedAt = time
             )
 
-            val affectedRows = withContext(Dispatchers.IO) {
+
+
+            withContext(Dispatchers.IO) {
                 drawingRepo.addProject(project)
+
+                val fixedLayerId = UUID.randomUUID().toString()
+                val fixedLayer = LayerEntity(
+                    id = fixedLayerId,
+                    projectId = project.id,
+                    layerIndex = 0,
+                    name = "background",
+                    strokesJsonPath = storageRepo.getLayerFilePath(project.id, fixedLayerId),
+                )
+
+                drawingRepo.addOrUpdateLayer(fixedLayer)
             }
 
             homeScreenState.isCreatingNewProject = false

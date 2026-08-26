@@ -22,7 +22,7 @@ import com.example.fluidvectorar.domain.model.BrushStyle
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.PointData
 import com.example.fluidvectorar.domain.model.StrokeData
-import com.example.fluidvectorar.ui.editor.helper.BezierSmoother
+import com.example.fluidvectorar.helper.BezierSmoother
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasMode
 

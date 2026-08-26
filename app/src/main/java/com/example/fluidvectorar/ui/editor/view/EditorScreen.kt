@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.fluidvectorar.AppRoute
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
@@ -35,13 +38,38 @@ fun EditorScreen(
     LaunchedEffect(Unit) {
         viewModel.loadProject(projectId)
     }
+
+    val editorState by viewModel.editorState.collectAsStateWithLifecycle()
+
+    EditorScreenView(
+        title = if (editorState.project != null) editorState.project!!.title else "Loading...",
+        onBackClick = {
+            navController.popBackStack(AppRoute.Home, inclusive = false)
+        },
+        onSaveClick = {
+            TODO()
+        },
+        onUndoClick = {
+            TODO()
+        },
+        onRedoClick = {
+            TODO()
+        },
+        layers = editorState.layers,
+        spitStroke = { strokeData ->
+            viewModel.addStrokeToCurLayer(strokeData)
+        }
+    )
 }
 
 
 @Composable
 fun EditorScreenView(
+    title: String,
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
+    onRedoClick: () -> Unit = {},
     layers: List<LayerState> = emptyList(),
     spitStroke: (StrokeData) -> Unit = {},
 ) {
@@ -52,10 +80,10 @@ fun EditorScreenView(
     ) {
 
         EditorTopBar(
-            projectTitle = "Untitled Vector",
+            projectTitle = title,
             onBackClick = onBackClick,
-            onUndoClick = { /* Undo */ },
-            onRedoClick = { /* Redo */ },
+            onUndoClick = { onUndoClick() },
+            onRedoClick = { onRedoClick() },
             onSaveClick = onSaveClick
         )
 
@@ -71,14 +99,14 @@ fun EditorScreenView(
             FluidCanvas(
                 canvasState = canvasGestureState,
                 modifier = Modifier.fillMaxSize(),
-                layers = emptyList(),
+                layers = layers,
                 activeMode = canvasUIConfigState.activeMode,
                 isReticleEnabled = canvasUIConfigState.isReticleEnabled,
                 isGridEnabled = canvasUIConfigState.isGridEnabled,
                 gridSizeDp = canvasUIConfigState.gridSizeDp,
                 currentBrushStyle = canvasUIConfigState.currentBrushStyle,
-                spitStroke = {
-                    // TODO
+                spitStroke = { strokeData ->
+                    spitStroke(strokeData)
                 }
             )
 
@@ -100,6 +128,8 @@ fun EditorScreenView(
 @Composable
 fun EditorScreenViewPreview() {
     FluidVectorARTheme {
-        EditorScreenView()
+        EditorScreenView(
+            title = "Preview"
+        )
     }
 }

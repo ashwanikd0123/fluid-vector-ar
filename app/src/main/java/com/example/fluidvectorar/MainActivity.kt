@@ -11,8 +11,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.fluidvectorar.ui.editor.view.EditorScreenView
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
+import com.example.fluidvectorar.ui.editor.view.EditorScreen
 import com.example.fluidvectorar.ui.home.view.HomeScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,7 +33,11 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
             ) {
                 composable<AppRoute.EditorStudio> {
-                    EditorScreenView()
+                    val route = it.toRoute<AppRoute.EditorStudio>()
+                    EditorScreen(
+                        projectId = route.projectId ?: "unknown",
+                        navController = navController
+                    )
                 }
 
                 composable<AppRoute.Home> {

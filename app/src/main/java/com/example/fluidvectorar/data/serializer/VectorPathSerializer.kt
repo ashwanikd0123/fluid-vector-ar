@@ -18,7 +18,9 @@ class VectorPathSerializer @Inject constructor() {
     }
 
     fun readStrokesFromFile(file: File): List<StrokeData> {
-        if (!file.exists()) return emptyList()
+        if (!file.exists()) {
+            return emptyList()
+        }
 
         return try {
             val jsonString = file.readText()
