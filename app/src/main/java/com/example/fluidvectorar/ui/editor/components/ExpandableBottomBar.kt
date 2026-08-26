@@ -36,14 +36,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasMode
+import com.example.fluidvectorar.domain.model.BrushStyle
+import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
+import com.example.fluidvectorar.ui.editor.state.CanvasMode
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
 @Composable
 fun ExpandableBottomToolbar(
-    canvasState: CanvasState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canvasMode: CanvasMode = CanvasMode.DRAW,
+    onClickCanvasModeChangeButton: (CanvasMode) -> Unit = {},
+    currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
 ) {
     var isExpanded by remember { mutableStateOf(true) }
 
@@ -73,14 +76,20 @@ fun ExpandableBottomToolbar(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(Color(canvasState.currentBrushStyle.colorHex))
+                                .background(Color(currentBrushStyle.colorHex))
                         )
                     }
 
                     // Tool 2: Pan/Draw Mode Switcher
-                    val isDraw = canvasState.activeMode == CanvasMode.DRAW
+                    val isDraw = canvasMode == CanvasMode.DRAW
                     IconButton(
-                        onClick = { canvasState.activeMode = if (isDraw) CanvasMode.PAN_ZOOM else CanvasMode.DRAW },
+                        onClick = {
+                            if (isDraw) {
+                                onClickCanvasModeChangeButton(CanvasMode.PAN_ZOOM)
+                            } else {
+                                onClickCanvasModeChangeButton(CanvasMode.DRAW)
+                            }
+                        },
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
                         )
@@ -122,10 +131,8 @@ fun ExpandableBottomToolbar(
 @Preview
 @Composable
 fun ExpandableBottomToolbarPreview() {
-    val canvasState = CanvasState()
+    val canvasState = CanvasGestureState()
     FluidVectorARTheme {
-        ExpandableBottomToolbar(
-            canvasState
-        )
+        ExpandableBottomToolbar()
     }
 }

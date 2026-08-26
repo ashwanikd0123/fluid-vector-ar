@@ -11,8 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.fluidvectorar.ui.editor.EditorScreenView
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
+import com.example.fluidvectorar.ui.editor.view.EditorScreenView
+import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.home.view.HomeScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable<AppRoute.EditorStudio> {
                     EditorScreenView(
-                        CanvasState(),
                         {},
                         {}
                     )

@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor.canvas.helper
+package com.example.fluidvectorar.ui.editor.helper
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path

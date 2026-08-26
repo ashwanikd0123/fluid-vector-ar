@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor.canvas.view
+package com.example.fluidvectorar.ui.editor.view
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -15,14 +15,25 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluidvectorar.ui.editor.canvas.helper.BezierSmoother
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasMode
+import com.example.fluidvectorar.domain.model.BrushStyle
+import com.example.fluidvectorar.domain.model.LayerState
+import com.example.fluidvectorar.domain.model.PointData
+import com.example.fluidvectorar.domain.model.StrokeData
+import com.example.fluidvectorar.ui.editor.helper.BezierSmoother
+import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
+import com.example.fluidvectorar.ui.editor.state.CanvasMode
 
 @Composable
 fun FluidCanvas(
-    canvasState: CanvasState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canvasState: CanvasGestureState,
+    layers: List<LayerState> = emptyList(),
+    activeMode: CanvasMode = CanvasMode.DRAW,
+    isReticleEnabled: Boolean = true,
+    isGridEnabled: Boolean = true,
+    gridSizeDp: Float = 20f,
+    currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
+    spitStroke: (StrokeData) -> Unit = {}
 ) {
     Canvas(
         modifier = modifier
@@ -34,10 +45,9 @@ fun FluidCanvas(
                 translationY = canvasState.offset.y,
                 rotationZ = canvasState.rotation
             )
-            .pointerInput(canvasState.activeMode) {
-                if (canvasState.activeMode == CanvasMode.PAN_ZOOM) {
+            .pointerInput(activeMode) {
+                if (activeMode == CanvasMode.PAN_ZOOM) {
                     detectTransformGestures { _, pan, zoom, rotation ->
-                        // Uses Clamped Matrix Logic
                         canvasState.updateTransformations(
                             zoomFactor = zoom,
                             panChange = pan,
@@ -57,7 +67,7 @@ fun FluidCanvas(
                                     canvasState.currentRawTouchScreen = rawScreenTouch
 
                                     // Apply Constant Screen Offset
-                                    val adjustedScreenTouch = if (canvasState.isReticleEnabled) {
+                                    val adjustedScreenTouch = if (isReticleEnabled) {
                                         rawScreenTouch + canvasState.reticleOffset
                                     } else {
                                         rawScreenTouch
@@ -74,6 +84,21 @@ fun FluidCanvas(
                                     canvasState.currentPathPoints.add(worldPoint)
                                     change.consume()
                                 } else if (canvasState.currentPathPoints.isNotEmpty()) {
+
+                                    val pointsData = canvasState.currentPathPoints.map {
+                                        PointData(x = it.x, y = it.y)
+                                    }
+
+                                    // 2. Create the final StrokeData object
+                                    val newStroke = StrokeData(
+                                        points = pointsData,
+                                        brushStyle = currentBrushStyle,
+                                        isSmoothed = true
+                                    )
+
+                                    // 3. Spit the stroke back to the ViewModel to save in active layer
+                                    spitStroke(newStroke)
+
                                     canvasState.currentPathPoints.clear()
                                     canvasState.currentRawTouchScreen = null
                                     canvasState.currentTargetScreen = null
@@ -85,8 +110,31 @@ fun FluidCanvas(
             }
     ) {
         // backgroung grid
-        if (canvasState.isGridEnabled) {
-            drawBackgroundGrid(gridSizePx = canvasState.gridSizeDp.dp.toPx())
+        if (isGridEnabled) {
+            drawBackgroundGrid(gridSizePx = gridSizeDp.dp.toPx())
+        }
+
+        // layers
+        layers.forEach { layer ->
+            if (layer.isVisible) {
+                layer.strokes.forEach { stroke ->
+                    val pathPoints = stroke.points.map { Offset(it.x, it.y) }
+
+                    if (pathPoints.isNotEmpty()) {
+                        val strokePath = BezierSmoother.createSmoothPath(pathPoints)
+                        drawPath(
+                            path = strokePath,
+                            color = Color(stroke.brushStyle.colorHex),
+                            style = Stroke(
+                                width = stroke.brushStyle.strokeWidth,
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            ),
+                            alpha = layer.opacity // Layer opacity support
+                        )
+                    }
+                }
+            }
         }
 
         // current path
@@ -94,16 +142,16 @@ fun FluidCanvas(
             val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
             drawPath(
                 path = activePath,
-                color = Color(canvasState.currentBrushStyle.colorHex),
+                color = Color(currentBrushStyle.colorHex),
                 style = Stroke(
-                    width = canvasState.currentBrushStyle.strokeWidth,
+                    width = currentBrushStyle.strokeWidth,
                     cap = StrokeCap.Round,
                     join = StrokeJoin.Round
                 )
             )
 
             // 4. Render Virtual Reticle Pointer (Crosshair) Over Screen
-            if (canvasState.isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
+            if (isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
                 val currentTarget = canvasState.currentPathPoints.last()
                 drawCircle(
                     color = Color.Red,
@@ -165,6 +213,6 @@ private fun DrawScope.drawBackgroundGrid(gridSizePx: Float) {
 @Composable
 fun PreviewFluidCanvas() {
     FluidCanvas(
-        canvasState = CanvasState()
+        canvasState = CanvasGestureState()
     )
 }

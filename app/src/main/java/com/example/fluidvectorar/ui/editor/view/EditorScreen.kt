@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor
+package com.example.fluidvectorar.ui.editor.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,10 +17,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.fluidvectorar.ui.editor.canvas.state.CanvasState
-import com.example.fluidvectorar.ui.editor.canvas.view.FluidCanvas
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
 import com.example.fluidvectorar.ui.editor.components.ExpandableBottomToolbar
+import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
+import com.example.fluidvectorar.ui.editor.state.CanvasUIConfigState
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
@@ -29,21 +31,22 @@ fun EditorScreen(
     viewModel: EditorScreenViewModel = hiltViewModel()
 ) {
     LaunchedEffect(Unit) {
-
+        viewModel.loadProject(projectId)
     }
 }
 
 
 @Composable
 fun EditorScreenView(
-    canvasState: CanvasState,
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit
 ) {
-    // COLUMN used instead of Box to prevent TopBar from overlapping the Canvas
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
 
-        // 1. FIXED TOP ACTION BAR (Takes only its required height)
         EditorTopBar(
             projectTitle = "Untitled Vector",
             onBackClick = onBackClick,
@@ -52,20 +55,38 @@ fun EditorScreenView(
             onSaveClick = onSaveClick
         )
 
-        // 2. CANVAS AREA (Takes remaining 100% space)
-        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+
+            val canvasGestureState = remember { CanvasGestureState() }
+            val canvasUIConfigState = remember { CanvasUIConfigState() }
 
             FluidCanvas(
-                canvasState = canvasState,
-                modifier = Modifier.fillMaxSize()
+                canvasState = canvasGestureState,
+                modifier = Modifier.fillMaxSize(),
+                layers = emptyList(),
+                activeMode = canvasUIConfigState.activeMode,
+                isReticleEnabled = canvasUIConfigState.isReticleEnabled,
+                isGridEnabled = canvasUIConfigState.isGridEnabled,
+                gridSizeDp = canvasUIConfigState.gridSizeDp,
+                currentBrushStyle = canvasUIConfigState.currentBrushStyle,
+                spitStroke = {
+                    // TODO
+                }
             )
 
-            // 3. COLLAPSIBLE FLOATING TOOLBAR
             ExpandableBottomToolbar(
-                canvasState = canvasState,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd) // Bottom Right positioning
-                    .padding(16.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                canvasMode = canvasUIConfigState.activeMode,
+                onClickCanvasModeChangeButton = { newCanvasMode ->
+                    canvasUIConfigState.activeMode = newCanvasMode
+                },
+                currentBrushStyle = canvasUIConfigState.currentBrushStyle
             )
         }
     }
@@ -74,10 +95,9 @@ fun EditorScreenView(
 @Preview
 @Composable
 fun EditorScreenViewPreview() {
-    val canvasState = CanvasState()
+    val canvasState = CanvasGestureState()
     FluidVectorARTheme {
         EditorScreenView(
-            canvasState,
             {},
             {}
         )

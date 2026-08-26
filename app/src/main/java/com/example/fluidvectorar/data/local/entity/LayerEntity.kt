@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.fluidvectorar.domain.model.LayerState
+import com.example.fluidvectorar.domain.model.StrokeData
 import java.util.UUID
 
 

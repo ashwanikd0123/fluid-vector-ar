@@ -1,4 +1,4 @@
-package com.example.fluidvectorar.ui.editor.canvas.helper
+package com.example.fluidvectorar.ui.editor.helper
 
 import android.content.Context
 import android.graphics.Bitmap
