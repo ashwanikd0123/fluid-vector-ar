@@ -5,6 +5,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -38,6 +40,10 @@ fun FluidCanvas(
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
     spitStroke: (StrokeData) -> Unit = {}
 ) {
+    val updatedBrushStyle by rememberUpdatedState(currentBrushStyle)
+    val updatedSpitStroke by rememberUpdatedState(spitStroke)
+    val updatedIsReticleEnabled by rememberUpdatedState(isReticleEnabled)
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
@@ -66,7 +72,7 @@ fun FluidCanvas(
                                     canvasState.currentRawTouchScreen = rawScreenTouch
 
                                     // Apply Constant Screen Offset
-                                    val adjustedScreenTouch = if (isReticleEnabled) {
+                                    val adjustedScreenTouch = if (updatedIsReticleEnabled) {
                                         rawScreenTouch + canvasState.reticleOffset
                                     } else {
                                         rawScreenTouch
@@ -93,12 +99,12 @@ fun FluidCanvas(
                                     // 2. Create the final StrokeData object
                                     val newStroke = StrokeData(
                                         points = pointsData,
-                                        brushStyle = currentBrushStyle,
+                                        brushStyle = updatedBrushStyle,
                                         isSmoothed = true
                                     )
 
                                     // 3. Spit the stroke back to the ViewModel to save in active layer
-                                    spitStroke(newStroke)
+                                    updatedSpitStroke(newStroke)
 
                                     canvasState.currentPathPoints.clear()
                                     canvasState.currentRawTouchScreen = null
@@ -150,9 +156,9 @@ fun FluidCanvas(
             val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
             drawPath(
                 path = activePath,
-                color = Color(currentBrushStyle.colorHex),
+                color = Color(updatedBrushStyle.colorHex),
                 style = Stroke(
-                    width = currentBrushStyle.strokeWidth,
+                    width = updatedBrushStyle.strokeWidth,
                     cap = StrokeCap.Round,
                     join = StrokeJoin.Round
                 )
