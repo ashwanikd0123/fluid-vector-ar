@@ -39,7 +39,6 @@ fun BrushSettingsPanel(
     currentStrokeWidth: Float = 50f,
     currentColorHex: Long = 0xff000000,
     onStrokeWidthChanged: (Float) -> Unit = {},
-    onDismiss: () -> Unit = {},
 ) {
     Card(
         modifier = modifier.width(240.dp),
@@ -51,30 +50,6 @@ fun BrushSettingsPanel(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Header with Title and Close Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Brush Size",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.DarkGray
-                )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .size(24.dp) // Chota icon better UX ke liye
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close settings",
-                        tint = Color.Gray
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // 2. Live Brush Preview

@@ -168,9 +168,6 @@ fun EditorScreenView(
                                 strokeWidth = newWidth
                             )
                         },
-                        onDismiss = {
-                            activeDialog = SettingDialogState.NONE
-                        }
                     )
                 }
 
@@ -182,9 +179,17 @@ fun EditorScreenView(
                     },
                     currentBrushStyle = canvasUIConfigState.currentBrushStyle,
                     onColorClick = {
+                        if (activeDialog == SettingDialogState.COLOR_SETTING) {
+                            activeDialog = SettingDialogState.NONE
+                            return@ExpandableBottomToolbar
+                        }
                         activeDialog = SettingDialogState.COLOR_SETTING
                     },
                     onBrushSettingsClick = {
+                        if (activeDialog == SettingDialogState.PENCIL_SETTING) {
+                            activeDialog = SettingDialogState.NONE
+                            return@ExpandableBottomToolbar
+                        }
                         activeDialog = SettingDialogState.PENCIL_SETTING
                     },
                     onLayersClick = {
