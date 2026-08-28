@@ -1,6 +1,7 @@
 package com.example.fluidvectorar.ui.editor.view
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,9 +10,12 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -133,43 +136,16 @@ fun EditorScreenView(
                 horizontalAlignment = Alignment.End
             ) {
 
-                AnimatedVisibility(
-                    visible = activeDialog == SettingDialogState.COLOR_SETTING,
-                    enter = scaleIn(
-                        transformOrigin = TransformOrigin(1f, 1f),
-                        animationSpec = tween(200)
-                    ) + fadeIn(),
-                    exit = scaleOut(
-                        transformOrigin = TransformOrigin(1f, 1f),
-                        animationSpec = tween(200)
-                    ) + fadeOut()
-                ) {
-                    ColorPickerDialog(
-                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
-                        onColorSelected = { color ->
-                            canvasUIConfigState.currentBrushStyle = canvasUIConfigState.currentBrushStyle.copy(
-                                colorHex = color
-                            )
-                            activeDialog = SettingDialogState.NONE
-                        }
-                    )
-                }
+                SettingDialogs(
+                    activeDialog = activeDialog,
+                    canvasUIConfigState = canvasUIConfigState,
+                    onActiveDialogChange = { activeDialog = it }
+                )
 
-                AnimatedVisibility(
-                    visible = activeDialog == SettingDialogState.PENCIL_SETTING,
-                    enter = scaleIn(transformOrigin = TransformOrigin(1f, 1f)) + fadeIn(),
-                    exit = scaleOut(transformOrigin = TransformOrigin(1f, 1f)) + fadeOut()
-                ) {
-                    BrushSettingsPanel(
-                        currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
-                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
-                        onStrokeWidthChanged = { newWidth ->
-                            canvasUIConfigState.currentBrushStyle = canvasUIConfigState.currentBrushStyle.copy(
-                                strokeWidth = newWidth
-                            )
-                        },
-                    )
-                }
+                Spacer(
+                    modifier = Modifier
+                        .height(8.dp)
+                )
 
                 ExpandableBottomToolbar(
                     modifier = Modifier,
@@ -196,6 +172,63 @@ fun EditorScreenView(
                         TODO()
                     }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingDialogs(
+    activeDialog: SettingDialogState,
+    canvasUIConfigState: CanvasUIConfigState,
+    onActiveDialogChange: (SettingDialogState) -> Unit
+) {
+    AnimatedContent(
+        targetState = activeDialog,
+        transitionSpec = {
+            (scaleIn(
+                transformOrigin = TransformOrigin(1f, 1f),
+                animationSpec = tween(250)
+            ) + fadeIn()).togetherWith(
+                scaleOut(
+                    transformOrigin = TransformOrigin(1f, 1f),
+                    animationSpec = tween(200)
+                ) + fadeOut()
+            )
+        },
+        label = "setting_dialogs_transition",
+        contentAlignment = Alignment.BottomEnd
+    ) { targetDialog ->
+        when (targetDialog) {
+            SettingDialogState.COLOR_SETTING -> {
+                ColorPickerDialog(
+                    currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                    onColorSelected = { color ->
+                        canvasUIConfigState.currentBrushStyle =
+                            canvasUIConfigState.currentBrushStyle.copy(
+                                colorHex = color
+                            )
+                        onActiveDialogChange(SettingDialogState.NONE)
+                    }
+                )
+            }
+
+            SettingDialogState.PENCIL_SETTING -> {
+                BrushSettingsPanel(
+                    currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
+                    currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                    onStrokeWidthChanged = { newWidth ->
+                        canvasUIConfigState.currentBrushStyle =
+                            canvasUIConfigState.currentBrushStyle.copy(
+                                strokeWidth = newWidth
+                            )
+                    },
+                )
+            }
+
+            else -> {
+                // Return empty content for states without dialogs in this panel
+                Spacer(modifier = Modifier.size(0.dp))
             }
         }
     }
