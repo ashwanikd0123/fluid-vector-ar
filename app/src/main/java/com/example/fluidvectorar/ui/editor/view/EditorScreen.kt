@@ -168,6 +168,9 @@ fun EditorScreenView(
                         }
                         activeDialog = SettingDialogState.PENCIL_SETTING
                     },
+                    onBrushStyleChange = { newBrushStyle ->
+                        canvasUIConfigState.currentBrushStyle = newBrushStyle
+                    },
                     onLayersClick = {
                         TODO()
                     }

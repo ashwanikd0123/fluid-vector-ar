@@ -36,9 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.fluidvectorar.R
 import com.example.fluidvectorar.domain.model.BrushStyle
+import com.example.fluidvectorar.domain.model.BrushType
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasMode
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
@@ -51,6 +54,7 @@ fun ExpandableBottomToolbar(
     onColorClick: () -> Unit = {},
     onBrushSettingsClick: () -> Unit = {},
     onLayersClick: () -> Unit = {},
+    onBrushStyleChange: (BrushStyle) -> Unit = {},
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
 ) {
     var isExpanded by remember { mutableStateOf(true) }
@@ -84,9 +88,34 @@ fun ExpandableBottomToolbar(
                         )
                     }
 
+                    // Brush / Eraser Toggle
+                    IconButton(onClick = {
+                        val newType = if (currentBrushStyle.brushType == BrushType.ERASER) {
+                            BrushType.PENCIL
+                        } else {
+                            BrushType.ERASER
+                        }
+                        onBrushStyleChange(currentBrushStyle.copy(brushType = newType))
+                    }) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (currentBrushStyle.brushType == BrushType.ERASER) {
+                                    R.drawable.ic_eraser_mode
+                                } else {
+                                    R.drawable.ic_pencil
+                                }
+                            ),
+                            contentDescription = "Toggle Pencil/Eraser",
+                            tint = if (currentBrushStyle.brushType == BrushType.ERASER) MaterialTheme.colorScheme.primary else Color.DarkGray
+                        )
+                    }
+
                     // Brush / Stroke Settings
                     IconButton(onClick = onBrushSettingsClick) {
-                        Icon(Icons.Default.Edit, contentDescription = "Brush Settings")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_brush_settings),
+                            contentDescription = "Brush Settings"
+                        )
                     }
 
                     // Layers Management

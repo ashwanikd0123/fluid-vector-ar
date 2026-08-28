@@ -9,7 +9,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -21,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.example.fluidvectorar.domain.model.BrushStyle
+import com.example.fluidvectorar.domain.model.BrushType
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.PointData
 import com.example.fluidvectorar.domain.model.StrokeData
@@ -120,7 +125,7 @@ fun FluidCanvas(
                 scaleY = canvasState.scale,
                 translationX = canvasState.offset.x,
                 translationY = canvasState.offset.y,
-                rotationZ = canvasState.rotation
+                rotationZ = canvasState.rotation,
             )
     ) {
         // backgroung grid
@@ -128,57 +133,69 @@ fun FluidCanvas(
             drawBackgroundGrid(gridSizePx = gridSizeDp.dp.toPx())
         }
 
-        // layers
-        layers.forEach { layer ->
-            if (layer.isVisible) {
-                layer.strokes.forEach { stroke ->
-                    val pathPoints = stroke.points.map { Offset(it.x, it.y) }
+        with(drawContext.canvas) {
+            saveLayer(bounds = size.toRect(), paint = Paint())
 
-                    if (pathPoints.isNotEmpty()) {
-                        val strokePath = BezierSmoother.createSmoothPath(pathPoints)
-                        drawPath(
-                            path = strokePath,
-                            color = Color(stroke.brushStyle.colorHex),
-                            style = Stroke(
-                                width = stroke.brushStyle.strokeWidth,
-                                cap = StrokeCap.Round,
-                                join = StrokeJoin.Round
-                            ),
-                            alpha = layer.opacity // Layer opacity support
-                        )
+            // layers
+            layers.forEach { layer ->
+                if (layer.isVisible) {
+                    layer.strokes.forEach { stroke ->
+                        val pathPoints = stroke.points.map { Offset(it.x, it.y) }
+
+                        val isEraser = stroke.brushStyle.brushType == BrushType.ERASER
+
+                        if (pathPoints.isNotEmpty()) {
+                            val strokePath = BezierSmoother.createSmoothPath(pathPoints)
+                            drawPath(
+                                path = strokePath,
+                                color = if (isEraser) Color.Black else Color(stroke.brushStyle.colorHex),
+                                style = Stroke(
+                                    width = stroke.brushStyle.strokeWidth,
+                                    cap = StrokeCap.Round,
+                                    join = StrokeJoin.Round
+                                ),
+                                alpha = layer.opacity,
+                                blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        // current path
-        if (canvasState.currentPathPoints.isNotEmpty()) {
-            val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
-            drawPath(
-                path = activePath,
-                color = Color(updatedBrushStyle.colorHex),
-                style = Stroke(
-                    width = updatedBrushStyle.strokeWidth,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
-            )
+            // current path
+            if (canvasState.currentPathPoints.isNotEmpty()) {
+                val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
+                val isEraser = currentBrushStyle.brushType == BrushType.ERASER
 
-            // 4. Render Virtual Reticle Pointer (Crosshair) Over Screen
-            if (isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
-                val currentTarget = canvasState.currentPathPoints.last()
-                drawCircle(
-                    color = Color.Red,
-                    radius = 8f,
-                    center = currentTarget
+                drawPath(
+                    path = activePath,
+                    color = if (isEraser) Color.Black else Color(currentBrushStyle.colorHex),
+                    style = Stroke(
+                        width = updatedBrushStyle.strokeWidth,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    ),
+                    blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
                 )
-                drawCircle(
-                    color = Color.Red,
-                    radius = 24f,
-                    center = currentTarget,
-                    style = Stroke(width = 2f)
-                )
+
+                // 4. Render Virtual Reticle Pointer (Crosshair) Over Screen
+                if (isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
+                    val currentTarget = canvasState.currentPathPoints.last()
+                    drawCircle(
+                        color = Color.Red,
+                        radius = 8f,
+                        center = currentTarget
+                    )
+                    drawCircle(
+                        color = Color.Red,
+                        radius = 24f,
+                        center = currentTarget,
+                        style = Stroke(width = 2f)
+                    )
+                }
             }
+
+            restore()
         }
     }
 }
