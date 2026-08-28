@@ -56,112 +56,120 @@ fun ExpandableBottomToolbar(
     onLayersClick: () -> Unit = {},
     onBrushStyleChange: (BrushStyle) -> Unit = {},
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
+    onExpandedStateChange: (Boolean) -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(true) }
 
-    Card(
+    Box(
         modifier = modifier.animateContentSize(
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
                 stiffness = Spring.StiffnessLow
             )
-        ),
-        shape = if (isExpanded) RoundedCornerShape(32.dp) else CircleShape,
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        )
     ) {
-        Row(
-            modifier = Modifier.padding(if (isExpanded) 12.dp else 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Card(
+            modifier = Modifier.padding(16.dp),
+            shape = if (isExpanded) RoundedCornerShape(32.dp) else CircleShape,
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            // 1. EXPANDED TOOLS (Color, Brush, Eraser, Layers)
-            AnimatedVisibility(visible = isExpanded) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(if (isExpanded) 12.dp else 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 1. EXPANDED TOOLS (Color, Brush, Eraser, Layers)
+                AnimatedVisibility(visible = isExpanded) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
 
-                    // Color Picker
-                    IconButton(onClick = onColorClick) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(Color(currentBrushStyle.colorHex))
-                        )
-                    }
-
-                    // Brush / Eraser Toggle
-                    IconButton(onClick = {
-                        val newType = if (currentBrushStyle.brushType == BrushType.ERASER) {
-                            BrushType.PENCIL
-                        } else {
-                            BrushType.ERASER
+                        // Color Picker
+                        IconButton(onClick = onColorClick) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(currentBrushStyle.colorHex))
+                            )
                         }
-                        onBrushStyleChange(currentBrushStyle.copy(brushType = newType))
-                    }) {
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentBrushStyle.brushType == BrushType.ERASER) {
-                                    R.drawable.ic_eraser_mode
-                                } else {
-                                    R.drawable.ic_pencil
-                                }
-                            ),
-                            contentDescription = "Toggle Pencil/Eraser",
-                            tint = if (currentBrushStyle.brushType == BrushType.ERASER) MaterialTheme.colorScheme.primary else Color.DarkGray
-                        )
-                    }
 
-                    // Brush / Stroke Settings
-                    IconButton(onClick = onBrushSettingsClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_brush_settings),
-                            contentDescription = "Brush Settings"
-                        )
-                    }
+                        // Brush / Eraser Toggle
+                        IconButton(onClick = {
+                            val newType = if (currentBrushStyle.brushType == BrushType.ERASER) {
+                                BrushType.PENCIL
+                            } else {
+                                BrushType.ERASER
+                            }
+                            onBrushStyleChange(currentBrushStyle.copy(brushType = newType))
+                        }) {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (currentBrushStyle.brushType == BrushType.ERASER) {
+                                        R.drawable.ic_eraser_mode
+                                    } else {
+                                        R.drawable.ic_pencil
+                                    }
+                                ),
+                                contentDescription = "Toggle Pencil/Eraser",
+                                tint = if (currentBrushStyle.brushType == BrushType.ERASER) MaterialTheme.colorScheme.primary else Color.DarkGray
+                            )
+                        }
 
-                    // Layers Management
-                    IconButton(onClick = onLayersClick) {
-                        Icon(Icons.Default.Menu, contentDescription = "Layers") // Use a better layer icon if available
-                    }
+                        // Brush / Stroke Settings
+                        IconButton(onClick = onBrushSettingsClick) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_brush_settings),
+                                contentDescription = "Brush Settings"
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(modifier = Modifier.height(24.dp).width(1.dp).background(Color.LightGray))
-                    Spacer(modifier = Modifier.width(8.dp))
+                        // Layers Management
+                        IconButton(onClick = onLayersClick) {
+                            Icon(Icons.Default.Menu, contentDescription = "Layers") // Use a better layer icon if available
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(modifier = Modifier.height(24.dp).width(1.dp).background(Color.LightGray))
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 }
-            }
 
-            // 2. ALWAYS VISIBLE TOOLS (Pan Toggle + Expand/Collapse)
+                // 2. ALWAYS VISIBLE TOOLS (Pan Toggle + Expand/Collapse)
 
-            // Pan/Draw Mode Switcher (Now outside AnimatedVisibility)
-            val isDraw = canvasMode == CanvasMode.DRAW
-            IconButton(
-                onClick = {
-                    onClickCanvasModeChangeButton(if (isDraw) CanvasMode.PAN_ZOOM else CanvasMode.DRAW)
-                },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
-                )
-            ) {
-                Icon(
-                    imageVector = if (isDraw) Icons.Default.Create else Icons.Default.Search,
-                    contentDescription = "Toggle Mode",
-                    tint = if (isDraw) Color.White else Color.DarkGray
-                )
-            }
+                // Pan/Draw Mode Switcher (Now outside AnimatedVisibility)
+                val isDraw = canvasMode == CanvasMode.DRAW
+                IconButton(
+                    onClick = {
+                        onClickCanvasModeChangeButton(if (isDraw) CanvasMode.PAN_ZOOM else CanvasMode.DRAW)
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isDraw) Icons.Default.Create else Icons.Default.Search,
+                        contentDescription = "Toggle Mode",
+                        tint = if (isDraw) Color.White else Color.DarkGray
+                    )
+                }
 
-            Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
-            // Expand/Collapse Toggle
-            IconButton(
-                onClick = { isExpanded = !isExpanded },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Build,
-                    contentDescription = if (isExpanded) "Collapse Toolbar" else "Expand Toolbar",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                // Expand/Collapse Toggle
+                IconButton(
+                    onClick = {
+                        isExpanded = !isExpanded
+                        onExpandedStateChange(isExpanded)
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Build,
+                        contentDescription = if (isExpanded) "Collapse Toolbar" else "Expand Toolbar",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }

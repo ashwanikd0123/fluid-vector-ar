@@ -131,8 +131,7 @@ fun EditorScreenView(
 
             Column(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .align(Alignment.BottomEnd),
                 horizontalAlignment = Alignment.End
             ) {
 
@@ -140,11 +139,6 @@ fun EditorScreenView(
                     activeDialog = activeDialog,
                     canvasUIConfigState = canvasUIConfigState,
                     onActiveDialogChange = { activeDialog = it }
-                )
-
-                Spacer(
-                    modifier = Modifier
-                        .height(8.dp)
                 )
 
                 ExpandableBottomToolbar(
@@ -169,10 +163,14 @@ fun EditorScreenView(
                         activeDialog = SettingDialogState.PENCIL_SETTING
                     },
                     onBrushStyleChange = { newBrushStyle ->
+                        activeDialog = SettingDialogState.NONE
                         canvasUIConfigState.currentBrushStyle = newBrushStyle
                     },
                     onLayersClick = {
                         TODO()
+                    },
+                    onExpandedStateChange = {
+                        activeDialog = SettingDialogState.NONE
                     }
                 )
             }
@@ -202,36 +200,38 @@ private fun SettingDialogs(
         label = "setting_dialogs_transition",
         contentAlignment = Alignment.BottomEnd
     ) { targetDialog ->
-        when (targetDialog) {
-            SettingDialogState.COLOR_SETTING -> {
-                ColorPickerDialog(
-                    currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
-                    onColorSelected = { color ->
-                        canvasUIConfigState.currentBrushStyle =
-                            canvasUIConfigState.currentBrushStyle.copy(
-                                colorHex = color
-                            )
-                        onActiveDialogChange(SettingDialogState.NONE)
-                    }
-                )
-            }
+        Box(modifier = Modifier.padding(16.dp)) {
+            when (targetDialog) {
+                SettingDialogState.COLOR_SETTING -> {
+                    ColorPickerDialog(
+                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                        onColorSelected = { color ->
+                            canvasUIConfigState.currentBrushStyle =
+                                canvasUIConfigState.currentBrushStyle.copy(
+                                    colorHex = color
+                                )
+                            onActiveDialogChange(SettingDialogState.NONE)
+                        }
+                    )
+                }
 
-            SettingDialogState.PENCIL_SETTING -> {
-                BrushSettingsPanel(
-                    currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
-                    currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
-                    onStrokeWidthChanged = { newWidth ->
-                        canvasUIConfigState.currentBrushStyle =
-                            canvasUIConfigState.currentBrushStyle.copy(
-                                strokeWidth = newWidth
-                            )
-                    },
-                )
-            }
+                SettingDialogState.PENCIL_SETTING -> {
+                    BrushSettingsPanel(
+                        currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
+                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                        onStrokeWidthChanged = { newWidth ->
+                            canvasUIConfigState.currentBrushStyle =
+                                canvasUIConfigState.currentBrushStyle.copy(
+                                    strokeWidth = newWidth
+                                )
+                        },
+                    )
+                }
 
-            else -> {
-                // Return empty content for states without dialogs in this panel
-                Spacer(modifier = Modifier.size(0.dp))
+                else -> {
+                    // Return empty content for states without dialogs in this panel
+                    Spacer(modifier = Modifier.size(0.dp))
+                }
             }
         }
     }
