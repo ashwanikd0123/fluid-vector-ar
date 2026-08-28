@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,17 +48,20 @@ fun ExpandableBottomToolbar(
     modifier: Modifier = Modifier,
     canvasMode: CanvasMode = CanvasMode.DRAW,
     onClickCanvasModeChangeButton: (CanvasMode) -> Unit = {},
+    onColorClick: () -> Unit = {},
+    onBrushSettingsClick: () -> Unit = {},
+    onLayersClick: () -> Unit = {},
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
 ) {
     var isExpanded by remember { mutableStateOf(true) }
 
     Card(
-        modifier = modifier
-            // animateContentSize se width/height circle se pill me smoothly animate hogi
-            .animateContentSize(animationSpec = spring(
+        modifier = modifier.animateContentSize(
+            animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
                 stiffness = Spring.StiffnessLow
-            )),
+            )
+        ),
         shape = if (isExpanded) RoundedCornerShape(32.dp) else CircleShape,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
@@ -65,13 +70,12 @@ fun ExpandableBottomToolbar(
             modifier = Modifier.padding(if (isExpanded) 12.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // Expanded Mode Tools (Visible only when expanded)
+            // 1. EXPANDED TOOLS (Color, Brush, Eraser, Layers)
             AnimatedVisibility(visible = isExpanded) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
 
-                    // Tool 1: Color/Brush Picker
-                    IconButton(onClick = { /* Open Color Picker Dialog */ }) {
+                    // Color Picker
+                    IconButton(onClick = onColorClick) {
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
@@ -80,38 +84,44 @@ fun ExpandableBottomToolbar(
                         )
                     }
 
-                    // Tool 2: Pan/Draw Mode Switcher
-                    val isDraw = canvasMode == CanvasMode.DRAW
-                    IconButton(
-                        onClick = {
-                            if (isDraw) {
-                                onClickCanvasModeChangeButton(CanvasMode.PAN_ZOOM)
-                            } else {
-                                onClickCanvasModeChangeButton(CanvasMode.DRAW)
-                            }
-                        },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = if (isDraw) Icons.Default.Create else Icons.Default.Search, // Create vs Pan Icon
-                            contentDescription = "Toggle Mode",
-                            tint = if (isDraw) Color.White else Color.DarkGray
-                        )
+                    // Brush / Stroke Settings
+                    IconButton(onClick = onBrushSettingsClick) {
+                        Icon(Icons.Default.Edit, contentDescription = "Brush Settings")
+                    }
+
+                    // Layers Management
+                    IconButton(onClick = onLayersClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Layers") // Use a better layer icon if available
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    // Divider
                     Box(modifier = Modifier.height(24.dp).width(1.dp).background(Color.LightGray))
-
                     Spacer(modifier = Modifier.width(8.dp))
                 }
             }
 
-            // The Main Toggle Button (Always visible)
-            // Changes icon from "Brush" to "Close (X)" based on state
+            // 2. ALWAYS VISIBLE TOOLS (Pan Toggle + Expand/Collapse)
+
+            // Pan/Draw Mode Switcher (Now outside AnimatedVisibility)
+            val isDraw = canvasMode == CanvasMode.DRAW
+            IconButton(
+                onClick = {
+                    onClickCanvasModeChangeButton(if (isDraw) CanvasMode.PAN_ZOOM else CanvasMode.DRAW)
+                },
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = if (isDraw) MaterialTheme.colorScheme.primary else Color(0xFFE2E8F0)
+                )
+            ) {
+                Icon(
+                    imageVector = if (isDraw) Icons.Default.Create else Icons.Default.Search,
+                    contentDescription = "Toggle Mode",
+                    tint = if (isDraw) Color.White else Color.DarkGray
+                )
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Expand/Collapse Toggle
             IconButton(
                 onClick = { isExpanded = !isExpanded },
                 colors = IconButtonDefaults.iconButtonColors(
@@ -131,7 +141,6 @@ fun ExpandableBottomToolbar(
 @Preview
 @Composable
 fun ExpandableBottomToolbarPreview() {
-    val canvasState = CanvasGestureState()
     FluidVectorARTheme {
         ExpandableBottomToolbar()
     }

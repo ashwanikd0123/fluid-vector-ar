@@ -1,5 +1,11 @@
 package com.example.fluidvectorar.ui.editor.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +16,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -22,6 +31,7 @@ import androidx.navigation.NavController
 import com.example.fluidvectorar.AppRoute
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
+import com.example.fluidvectorar.ui.editor.components.ColorPickerDialog
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
 import com.example.fluidvectorar.ui.editor.components.ExpandableBottomToolbar
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
@@ -96,6 +106,8 @@ fun EditorScreenView(
             val canvasGestureState = remember { CanvasGestureState() }
             val canvasUIConfigState = remember { CanvasUIConfigState() }
 
+            var showColorPicker by remember { mutableStateOf(false) }
+
             FluidCanvas(
                 canvasState = canvasGestureState,
                 modifier = Modifier.fillMaxSize(),
@@ -110,16 +122,53 @@ fun EditorScreenView(
                 }
             )
 
-            ExpandableBottomToolbar(
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
-                canvasMode = canvasUIConfigState.activeMode,
-                onClickCanvasModeChangeButton = { newCanvasMode ->
-                    canvasUIConfigState.activeMode = newCanvasMode
-                },
-                currentBrushStyle = canvasUIConfigState.currentBrushStyle
-            )
+                horizontalAlignment = Alignment.End
+            ) {
+
+                AnimatedVisibility(
+                    visible = showColorPicker,
+                    enter = scaleIn(
+                        transformOrigin = TransformOrigin(1f, 1f),
+                        animationSpec = tween(200)
+                    ) + fadeIn(),
+                    exit = scaleOut(
+                        transformOrigin = TransformOrigin(1f, 1f),
+                        animationSpec = tween(200)
+                    ) + fadeOut()
+                ) {
+                    ColorPickerDialog(
+                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                        onColorSelected = { color ->
+                            canvasUIConfigState.currentBrushStyle = canvasUIConfigState.currentBrushStyle.copy(
+                                colorHex = color
+                            )
+                            showColorPicker = false
+                        }
+                    )
+                }
+
+                ExpandableBottomToolbar(
+                    modifier = Modifier,
+                    canvasMode = canvasUIConfigState.activeMode,
+                    onClickCanvasModeChangeButton = { newCanvasMode ->
+                        canvasUIConfigState.activeMode = newCanvasMode
+                    },
+                    currentBrushStyle = canvasUIConfigState.currentBrushStyle,
+                    onColorClick = {
+                        showColorPicker = true
+                    },
+                    onBrushSettingsClick = {
+                        TODO()
+                    },
+                    onLayersClick = {
+                        TODO()
+                    }
+                )
+            }
         }
     }
 }
