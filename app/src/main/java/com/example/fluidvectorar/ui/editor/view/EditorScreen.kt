@@ -31,13 +31,17 @@ import androidx.navigation.NavController
 import com.example.fluidvectorar.AppRoute
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
+import com.example.fluidvectorar.ui.editor.components.BrushSettingsPanel
 import com.example.fluidvectorar.ui.editor.components.ColorPickerDialog
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
 import com.example.fluidvectorar.ui.editor.components.ExpandableBottomToolbar
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasUIConfigState
+import com.example.fluidvectorar.ui.editor.state.SettingDialogState
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
+
+
 
 @Composable
 fun EditorScreen(
@@ -106,7 +110,7 @@ fun EditorScreenView(
             val canvasGestureState = remember { CanvasGestureState() }
             val canvasUIConfigState = remember { CanvasUIConfigState() }
 
-            var showColorPicker by remember { mutableStateOf(false) }
+            var activeDialog by remember { mutableStateOf(SettingDialogState.NONE) }
 
             FluidCanvas(
                 canvasState = canvasGestureState,
@@ -130,7 +134,7 @@ fun EditorScreenView(
             ) {
 
                 AnimatedVisibility(
-                    visible = showColorPicker,
+                    visible = activeDialog == SettingDialogState.COLOR_SETTING,
                     enter = scaleIn(
                         transformOrigin = TransformOrigin(1f, 1f),
                         animationSpec = tween(200)
@@ -146,7 +150,26 @@ fun EditorScreenView(
                             canvasUIConfigState.currentBrushStyle = canvasUIConfigState.currentBrushStyle.copy(
                                 colorHex = color
                             )
-                            showColorPicker = false
+                            activeDialog = SettingDialogState.NONE
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = activeDialog == SettingDialogState.PENCIL_SETTING,
+                    enter = scaleIn(transformOrigin = TransformOrigin(1f, 1f)) + fadeIn(),
+                    exit = scaleOut(transformOrigin = TransformOrigin(1f, 1f)) + fadeOut()
+                ) {
+                    BrushSettingsPanel(
+                        currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
+                        currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
+                        onStrokeWidthChanged = { newWidth ->
+                            canvasUIConfigState.currentBrushStyle = canvasUIConfigState.currentBrushStyle.copy(
+                                strokeWidth = newWidth
+                            )
+                        },
+                        onDismiss = {
+                            activeDialog = SettingDialogState.NONE
                         }
                     )
                 }
@@ -159,10 +182,10 @@ fun EditorScreenView(
                     },
                     currentBrushStyle = canvasUIConfigState.currentBrushStyle,
                     onColorClick = {
-                        showColorPicker = true
+                        activeDialog = SettingDialogState.COLOR_SETTING
                     },
                     onBrushSettingsClick = {
-                        TODO()
+                        activeDialog = SettingDialogState.PENCIL_SETTING
                     },
                     onLayersClick = {
                         TODO()
