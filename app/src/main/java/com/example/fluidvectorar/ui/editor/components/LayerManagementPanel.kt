@@ -93,7 +93,6 @@ fun LayerManagementPanel(
 
     // UI List (excluding background layer 0)
     val uiList = remember(layers) { layers.reversed().filter { layers.indexOf(it) != 0 } }
-    val currentUiList by rememberUpdatedState(uiList)
 
     Card(
         modifier = modifier
@@ -186,15 +185,17 @@ fun LayerManagementPanel(
                     val isSelected = actualIndex == activeLayerIndex
                     val isDragged = draggedItemId == layer.id
 
+                    val scale by animateFloatAsState(if (isDragged) 1.08f else 1f, label = "drag_scale")
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItem()
-                            .zIndex(if (isDragged) 1f else 0f)
+                            .then(if (isDragged) Modifier else Modifier.animateItem())
+                            .zIndex(if (isDragged) 1.5f else 0f)
                             .graphicsLayer {
                                 translationY = if (isDragged) dragOffset else 0f
-                                scaleX = if (isDragged) 1.05f else 1f
-                                scaleY = if (isDragged) 1.05f else 1f
+                                scaleX = scale
+                                scaleY = scale
                                 shadowElevation = if (isDragged) 12f else 0f
                             }
                             .background(
@@ -221,36 +222,38 @@ fun LayerManagementPanel(
                                             change.consume()
                                             dragOffset += dragAmount.y
 
-                                            val currentDraggedIndex = currentUiList.indexOfFirst { it.id == draggedItemId }
-                                            if (currentDraggedIndex != -1) {
-                                                val layoutInfo = listState.layoutInfo
-                                                val visibleItems = layoutInfo.visibleItemsInfo
-                                                val draggedItemInfo = visibleItems.firstOrNull { it.key == draggedItemId }
+                                            val currentDraggedItemId = draggedItemId ?: return@detectDragGesturesAfterLongPress
+                                            val layoutInfo = listState.layoutInfo
+                                            val visibleItems = layoutInfo.visibleItemsInfo
+                                            val draggedItemInfo = visibleItems.firstOrNull { it.key == currentDraggedItemId }
 
-                                                if (draggedItemInfo != null) {
-                                                    val draggedItemCenter = draggedItemInfo.offset + draggedItemInfo.size / 2 + dragOffset.toInt()
+                                            if (draggedItemInfo != null) {
+                                                val draggedItemCenter = draggedItemInfo.offset + draggedItemInfo.size / 2 + dragOffset.toInt()
 
-                                                    val targetItem = visibleItems.firstOrNull { item ->
-                                                        val itemCenter = item.offset + item.size / 2
-                                                        if (dragOffset > 0) {
-                                                            // Dragging down
-                                                            item.index > draggedItemInfo.index && draggedItemCenter > itemCenter
-                                                        } else {
-                                                            // Dragging up
-                                                            item.index < draggedItemInfo.index && draggedItemCenter < itemCenter
-                                                        }
+                                                val targetItem = visibleItems.firstOrNull { item ->
+                                                    val itemCenter = item.offset + item.size / 2
+                                                    if (dragOffset > 0) {
+                                                        // Dragging down: item must be below current and dragged center must pass its center
+                                                        item.index > draggedItemInfo.index && draggedItemCenter > itemCenter
+                                                    } else if (dragOffset < 0) {
+                                                        // Dragging up: item must be above current and dragged center must pass its center
+                                                        item.index < draggedItemInfo.index && draggedItemCenter < itemCenter
+                                                    } else {
+                                                        false
                                                     }
+                                                }
 
-                                                    if (targetItem != null && targetItem.key != "spacer") {
-                                                        val fromActualIndex = currentLayers.indexOfFirst { it.id == layer.id }
-                                                        val targetLayerId = targetItem.key as String
-                                                        val toActualIndex = currentLayers.indexOfFirst { it.id == targetLayerId }
+                                                if (targetItem != null && targetItem.key != "spacer") {
+                                                    val fromActualIndex = currentLayers.indexOfFirst { it.id == currentDraggedItemId }
+                                                    val targetLayerId = targetItem.key as String
+                                                    val toActualIndex = currentLayers.indexOfFirst { it.id == targetLayerId }
 
-                                                        if (fromActualIndex != -1 && toActualIndex != -1) {
-                                                            currentOnReorder(fromActualIndex, toActualIndex)
-                                                            // Adjust drag offset to keep the item under finger
-                                                            dragOffset -= (targetItem.offset - draggedItemInfo.offset)
-                                                        }
+                                                    if (fromActualIndex != -1 && toActualIndex != -1) {
+                                                        // Adjust drag offset BEFORE triggering reorder to avoid frames with wrong translation
+                                                        val offsetDelta = (targetItem.offset - draggedItemInfo.offset).toFloat()
+                                                        dragOffset -= offsetDelta
+                                                        
+                                                        currentOnReorder(fromActualIndex, toActualIndex)
                                                     }
                                                 }
                                             }
