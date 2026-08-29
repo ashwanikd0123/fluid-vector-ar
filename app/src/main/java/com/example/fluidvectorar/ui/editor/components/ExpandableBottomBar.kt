@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.example.fluidvectorar.R
 import com.example.fluidvectorar.domain.model.BrushStyle
 import com.example.fluidvectorar.domain.model.BrushType
-import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasMode
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
