@@ -1,10 +1,12 @@
 package com.example.fluidvectorar.ui.editor.state
 
+import androidx.compose.runtime.Immutable
 import com.example.fluidvectorar.data.local.entity.ProjectEntity
 import com.example.fluidvectorar.domain.model.BrushStyle
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
 
+@Immutable
 data class EditorUiState(
     val project: ProjectEntity? = null,
 
