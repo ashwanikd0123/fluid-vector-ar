@@ -161,6 +161,11 @@ fun LayerManagementPanel(
                     val isSelected = actualIndex == activeLayerIndex
                     val isDragged = draggedUIIndex == uiIndex
 
+                    if (actualIndex == 0) {
+                        Spacer(modifier = Modifier.height(0.dp))
+                        return@itemsIndexed // Niche ka UI render hi nahi hoga
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -180,51 +185,52 @@ fun LayerManagementPanel(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        // Drag Handle (Long press to reorder)
-                        if (actualIndex != 0) {
-                            Icon(
-                                imageVector = Icons.Default.DragHandle,
-                                contentDescription = "Drag to reorder",
-                                tint = Color.Gray,
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                                    .pointerInput(Unit) {
-                                        detectDragGesturesAfterLongPress(
-                                            onDragStart = { draggedUIIndex = uiIndex },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                dragOffset += dragAmount.y
 
-                                                // Simple threshold swap logic (approx item height)
-                                                val threshold = 50f
-                                                if (dragOffset > threshold && uiIndex < uiList.lastIndex) {
-                                                    val targetUIIndex = uiIndex + 1
-                                                    val targetActualIndex =
-                                                        layers.lastIndex - targetUIIndex
-                                                    onReorderLayers(actualIndex, targetActualIndex)
-                                                    draggedUIIndex = targetUIIndex
-                                                    dragOffset -= threshold
-                                                } else if (dragOffset < -threshold && uiIndex > 0) {
-                                                    val targetUIIndex = uiIndex - 1
-                                                    val targetActualIndex =
-                                                        layers.lastIndex - targetUIIndex
-                                                    onReorderLayers(actualIndex, targetActualIndex)
-                                                    draggedUIIndex = targetUIIndex
-                                                    dragOffset += threshold
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                draggedUIIndex = null
-                                                dragOffset = 0f
-                                            },
-                                            onDragCancel = {
-                                                draggedUIIndex = null
-                                                dragOffset = 0f
+
+                        // Drag Handle (Long press to reorder)
+                        Icon(
+                            imageVector = Icons.Default.DragHandle,
+                            contentDescription = "Drag to reorder",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .pointerInput(Unit) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { draggedUIIndex = uiIndex },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragOffset += dragAmount.y
+
+                                            // Simple threshold swap logic (approx item height)
+                                            val threshold = 50f
+                                            if (dragOffset > threshold && uiIndex < uiList.lastIndex) {
+                                                val targetUIIndex = uiIndex + 1
+                                                val targetActualIndex =
+                                                    layers.lastIndex - targetUIIndex
+                                                onReorderLayers(actualIndex, targetActualIndex)
+                                                draggedUIIndex = targetUIIndex
+                                                dragOffset -= threshold
+                                            } else if (dragOffset < -threshold && uiIndex > 0) {
+                                                val targetUIIndex = uiIndex - 1
+                                                val targetActualIndex =
+                                                    layers.lastIndex - targetUIIndex
+                                                onReorderLayers(actualIndex, targetActualIndex)
+                                                draggedUIIndex = targetUIIndex
+                                                dragOffset += threshold
                                             }
-                                        )
-                                    }
-                            )
-                        }
+                                        },
+                                        onDragEnd = {
+                                            draggedUIIndex = null
+                                            dragOffset = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedUIIndex = null
+                                            dragOffset = 0f
+                                        }
+                                    )
+                                }
+                        )
+
 
                         // Layer Name
                         Text(

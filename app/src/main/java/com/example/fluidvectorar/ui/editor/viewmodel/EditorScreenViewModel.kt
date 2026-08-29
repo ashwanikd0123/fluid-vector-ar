@@ -90,17 +90,35 @@ class EditorScreenViewModel @Inject constructor(
                 layers = oldState.layers + LayerState(
                     id = UUID.randomUUID().toString(),
                     name = layerName,
-                )
+                ),
+                activeLayerIndex = oldState.layers.count()
             )
         }
     }
 
     fun deleteLayer(layerId: String) {
         editorState.update { oldState ->
+            val deletedIndex = oldState.layers.indexOfFirst { it.id == layerId }
+
+            if (deletedIndex <= 0) return@update oldState
+
+            val updatedLayers = oldState.layers.filterIndexed { index, _ -> index != deletedIndex }
+
+            var newActiveIndex = oldState.activeLayerIndex
+
+            if (deletedIndex <= oldState.activeLayerIndex) {
+                newActiveIndex--
+            }
+
+            newActiveIndex = if (updatedLayers.size > 1) {
+                newActiveIndex.coerceIn(1, updatedLayers.lastIndex)
+            } else {
+                0
+            }
+
             oldState.copy(
-                layers = oldState.layers.filter { layer ->
-                    layer.id != layerId
-                }
+                layers = updatedLayers,
+                activeLayerIndex = newActiveIndex
             )
         }
     }
