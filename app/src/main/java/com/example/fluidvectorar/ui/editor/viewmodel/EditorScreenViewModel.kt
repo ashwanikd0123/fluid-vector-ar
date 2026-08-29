@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,7 +33,7 @@ class EditorScreenViewModel @Inject constructor(
                 EditorUiState(
                     isLoadingProject = true,
                     layers = emptyList(),
-                    selectedLayerIndex = 0
+                    activeLayerIndex = 0
                 )
             }
 
@@ -61,7 +62,7 @@ class EditorScreenViewModel @Inject constructor(
                 it.copy(
                     isLoadingProject = false,
                     layers = layers,
-                    selectedLayerIndex = 0
+                    activeLayerIndex = 0
                 )
             }
         }
@@ -79,6 +80,87 @@ class EditorScreenViewModel @Inject constructor(
                                 layerState.strokes
                     )
                 }
+            )
+        }
+    }
+
+    fun addNewLayer(layerName: String) {
+        editorState.update { oldState ->
+            oldState.copy(
+                layers = oldState.layers + LayerState(
+                    id = UUID.randomUUID().toString(),
+                    name = layerName,
+                )
+            )
+        }
+    }
+
+    fun deleteLayer(layerId: String) {
+        editorState.update { oldState ->
+            oldState.copy(
+                layers = oldState.layers.filter { layer ->
+                    layer.id != layerId
+                }
+            )
+        }
+    }
+
+    fun setSelectedLayer(layerId: String) {
+        editorState.update { oldState ->
+            oldState.copy(
+                activeLayerIndex = oldState.layers.indexOfFirst { layer ->
+                    layer.id == layerId
+                }
+            )
+        }
+    }
+
+    fun setSelectedLayer(layerIdx: Int) {
+        editorState.update { oldState ->
+            oldState.copy(
+                activeLayerIndex = layerIdx.coerceIn(0, oldState.layers.count() - 1)
+            )
+        }
+    }
+
+    fun toggleVisibility(layerId: String) {
+        editorState.update { oldState ->
+            oldState.copy(
+                layers = oldState.layers.map { layer ->
+                    layer.copy(
+                        isVisible = if (layer.id == layerId) !layer.isVisible else layer.isVisible
+                    )
+                }
+            )
+        }
+    }
+
+    fun reorderLayers(fromIndex: Int, toIndex: Int) {
+        editorState.update { oldState ->
+            val currentLayers = oldState.layers
+
+            if (fromIndex == toIndex) return@update oldState
+            if (fromIndex !in currentLayers.indices || toIndex !in currentLayers.indices) return@update oldState
+
+            if (fromIndex == 0 || toIndex == 0) return@update oldState
+
+            val mutableLayers = currentLayers.toMutableList()
+            val movedLayer = mutableLayers.removeAt(fromIndex)
+            mutableLayers.add(toIndex, movedLayer)
+
+            var newActiveIndex = oldState.activeLayerIndex
+
+            if (fromIndex == oldState.activeLayerIndex) {
+                newActiveIndex = toIndex
+            } else if (oldState.activeLayerIndex in (fromIndex + 1)..toIndex) {
+                newActiveIndex--
+            } else if (oldState.activeLayerIndex in toIndex..<fromIndex) {
+                newActiveIndex++
+            }
+
+            oldState.copy(
+                layers = mutableLayers.toList(),
+                activeLayerIndex = newActiveIndex
             )
         }
     }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +37,7 @@ import com.example.fluidvectorar.ui.editor.components.BrushSettingsPanel
 import com.example.fluidvectorar.ui.editor.components.ColorPickerDialog
 import com.example.fluidvectorar.ui.editor.components.EditorTopBar
 import com.example.fluidvectorar.ui.editor.components.ExpandableBottomToolbar
+import com.example.fluidvectorar.ui.editor.components.LayerManagementPanel
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasUIConfigState
 import com.example.fluidvectorar.ui.editor.state.SettingDialogState
@@ -72,9 +72,25 @@ fun EditorScreen(
         onRedoClick = {
             TODO()
         },
-        layers = editorState.layers,
         spitStroke = { strokeData ->
             viewModel.addStrokeToCurLayer(strokeData)
+        },
+        layers = editorState.layers,
+        activeLayerIndex = editorState.activeLayerIndex,
+        onAddLayer = { layerName ->
+            viewModel.addNewLayer(layerName)
+        },
+        onToggleVisibility = { layerId ->
+            viewModel.toggleVisibility(layerId)
+        },
+        onDeleteLayer = { layerId ->
+            viewModel.deleteLayer(layerId)
+        },
+        onSelectLayer = { layerId ->
+            viewModel.setSelectedLayer(layerId)
+        },
+        onReorderLayers = { fromIndex, toIndex ->
+            viewModel.reorderLayers(fromIndex, toIndex)
         }
     )
 }
@@ -87,8 +103,14 @@ fun EditorScreenView(
     onSaveClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onRedoClick: () -> Unit = {},
-    layers: List<LayerState> = emptyList(),
     spitStroke: (StrokeData) -> Unit = {},
+    layers: List<LayerState> = emptyList(),
+    activeLayerIndex: Int = 0,
+    onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
+    onToggleVisibility: (String) -> Unit = {},
+    onDeleteLayer: (String) -> Unit = {},
+    onSelectLayer: (Int) -> Unit = {},
+    onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = Modifier
@@ -138,7 +160,24 @@ fun EditorScreenView(
                 SettingDialogs(
                     activeDialog = activeDialog,
                     canvasUIConfigState = canvasUIConfigState,
-                    onActiveDialogChange = { activeDialog = it }
+                    onActiveDialogChange = { activeDialog = it },
+                    layers = layers,
+                    activeLayerIndex = activeLayerIndex,
+                    onAddLayer = { layerName ->
+                        onAddLayer(layerName)
+                    },
+                    onToggleVisibility = { layerId ->
+                        onToggleVisibility(layerId)
+                    },
+                    onDeleteLayer = { layerId ->
+                        onDeleteLayer(layerId)
+                    },
+                    onSelectLayer = { layerId ->
+                        onSelectLayer(layerId)
+                    },
+                    onReorderLayers = { fromIndex, toIndex ->
+                        onReorderLayers(fromIndex, toIndex)
+                    }
                 )
 
                 ExpandableBottomToolbar(
@@ -162,12 +201,16 @@ fun EditorScreenView(
                         }
                         activeDialog = SettingDialogState.PENCIL_SETTING
                     },
+                    onLayersClick = {
+                        if (activeDialog == SettingDialogState.LAYER_SETTING) {
+                            activeDialog = SettingDialogState.NONE
+                            return@ExpandableBottomToolbar
+                        }
+                        activeDialog = SettingDialogState.LAYER_SETTING
+                    },
                     onBrushStyleChange = { newBrushStyle ->
                         activeDialog = SettingDialogState.NONE
                         canvasUIConfigState.currentBrushStyle = newBrushStyle
-                    },
-                    onLayersClick = {
-                        TODO()
                     },
                     onExpandedStateChange = {
                         activeDialog = SettingDialogState.NONE
@@ -182,7 +225,14 @@ fun EditorScreenView(
 private fun SettingDialogs(
     activeDialog: SettingDialogState,
     canvasUIConfigState: CanvasUIConfigState,
-    onActiveDialogChange: (SettingDialogState) -> Unit
+    onActiveDialogChange: (SettingDialogState) -> Unit,
+    layers: List<LayerState> = emptyList(),
+    activeLayerIndex: Int = 0,
+    onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
+    onToggleVisibility: (String) -> Unit = {},
+    onDeleteLayer: (String) -> Unit = {},
+    onSelectLayer: (Int) -> Unit = {},
+    onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> }
 ) {
     AnimatedContent(
         targetState = activeDialog,
@@ -225,6 +275,28 @@ private fun SettingDialogs(
                                     strokeWidth = newWidth
                                 )
                         },
+                    )
+                }
+
+                SettingDialogState.LAYER_SETTING -> {
+                    LayerManagementPanel(
+                        layers = layers,
+                        activeLayerIndex = activeLayerIndex,
+                        onAddLayer = { layerName ->
+                            onAddLayer(layerName)
+                        },
+                        onToggleVisibility = { layerId ->
+                            onToggleVisibility(layerId)
+                        },
+                        onDeleteLayer = { layerId ->
+                            onDeleteLayer(layerId)
+                        },
+                        onSelectLayer = { layerId ->
+                            onSelectLayer(layerId)
+                        },
+                        onReorderLayers = { fromIndex, toIndex ->
+                            onReorderLayers(fromIndex, toIndex)
+                        }
                     )
                 }
 

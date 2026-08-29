@@ -52,8 +52,8 @@ fun ExpandableBottomToolbar(
     canvasMode: CanvasMode = CanvasMode.DRAW,
     onClickCanvasModeChangeButton: (CanvasMode) -> Unit = {},
     onColorClick: () -> Unit = {},
-    onBrushSettingsClick: () -> Unit = {},
     onLayersClick: () -> Unit = {},
+    onBrushSettingsClick: () -> Unit = {},
     onBrushStyleChange: (BrushStyle) -> Unit = {},
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
     onExpandedStateChange: (Boolean) -> Unit = {}
