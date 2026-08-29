@@ -3,9 +3,11 @@ package com.example.fluidvectorar.ui.editor.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,18 +41,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -187,125 +189,168 @@ fun LayerManagementPanel(
 
                     val scale by animateFloatAsState(if (isDragged) 1.08f else 1f, label = "drag_scale")
 
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(if (isDragged) Modifier else Modifier.animateItem())
                             .zIndex(if (isDragged) 1.5f else 0f)
-                            .graphicsLayer {
-                                translationY = if (isDragged) dragOffset else 0f
-                                scaleX = scale
-                                scaleY = scale
-                                shadowElevation = if (isDragged) 12f else 0f
-                            }
-                            .background(
-                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable { onSelectLayer(actualIndex) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Drag Handle (Long press to reorder)
-                        Icon(
-                            imageVector = Icons.Default.DragHandle,
-                            contentDescription = "Drag to reorder",
-                            tint = Color.Gray,
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .pointerInput(layer.id) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = { _ ->
-                                            draggedItemId = layer.id
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            dragOffset += dragAmount.y
-
-                                            val currentDraggedItemId = draggedItemId ?: return@detectDragGesturesAfterLongPress
-                                            val layoutInfo = listState.layoutInfo
-                                            val visibleItems = layoutInfo.visibleItemsInfo
-                                            val draggedItemInfo = visibleItems.firstOrNull { it.key == currentDraggedItemId }
-
-                                            if (draggedItemInfo != null) {
-                                                val draggedItemCenter = draggedItemInfo.offset + draggedItemInfo.size / 2 + dragOffset.toInt()
-
-                                                val targetItem = visibleItems.firstOrNull { item ->
-                                                    val itemCenter = item.offset + item.size / 2
-                                                    if (dragOffset > 0) {
-                                                        // Dragging down: item must be below current and dragged center must pass its center
-                                                        item.index > draggedItemInfo.index && draggedItemCenter > itemCenter
-                                                    } else if (dragOffset < 0) {
-                                                        // Dragging up: item must be above current and dragged center must pass its center
-                                                        item.index < draggedItemInfo.index && draggedItemCenter < itemCenter
-                                                    } else {
-                                                        false
-                                                    }
-                                                }
-
-                                                if (targetItem != null && targetItem.key != "spacer") {
-                                                    val fromActualIndex = currentLayers.indexOfFirst { it.id == currentDraggedItemId }
-                                                    val targetLayerId = targetItem.key as String
-                                                    val toActualIndex = currentLayers.indexOfFirst { it.id == targetLayerId }
-
-                                                    if (fromActualIndex != -1 && toActualIndex != -1) {
-                                                        // Adjust drag offset BEFORE triggering reorder to avoid frames with wrong translation
-                                                        val offsetDelta = (targetItem.offset - draggedItemInfo.offset).toFloat()
-                                                        dragOffset -= offsetDelta
-                                                        
-                                                        currentOnReorder(fromActualIndex, toActualIndex)
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        onDragEnd = {
-                                            draggedItemId = null
-                                            dragOffset = 0f
-                                        },
-                                        onDragCancel = {
-                                            draggedItemId = null
-                                            dragOffset = 0f
-                                        }
+                        // 1. Hover/Hint Slot (The "empty" space where the item would land)
+                        if (isDragged) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(vertical = 2.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(12.dp)
                                     )
-                                }
-                        )
-
-
-                        // Layer Name
-                        Text(
-                            text = layer.name,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.DarkGray
-                        )
-
-                        // Visibility Toggle
-                        IconButton(
-                            onClick = { onToggleVisibility(layer.id) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (layer.isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle Visibility",
-                                tint = if (layer.isVisible) Color.DarkGray else Color.LightGray
+                                    .border(
+                                        width = 1.dp,
+                                        brush = SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
                             )
                         }
 
-                        // Delete Layer (Disable for Layer 0)
-                        if (actualIndex > 0) {
+                        // 2. The Actual Layer Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer {
+                                    translationY = if (isDragged) dragOffset else 0f
+                                    scaleX = scale
+                                    scaleY = scale
+                                    shadowElevation = if (isDragged) 12f else 0f
+                                }
+                                .background(
+                                    color = when {
+                                        isDragged -> Color.White
+                                        isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                        else -> Color.Transparent
+                                    },
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .then(
+                                    if (isDragged) {
+                                        Modifier.border(
+                                            width = 1.dp,
+                                            brush = SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                    } else Modifier
+                                )
+                                .clickable { onSelectLayer(actualIndex) }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Drag Handle (Long press to reorder)
+                            Icon(
+                                imageVector = Icons.Default.DragHandle,
+                                contentDescription = "Drag to reorder",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .pointerInput(layer.id) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = { _ ->
+                                                draggedItemId = layer.id
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                dragOffset += dragAmount.y
+
+                                                val currentDraggedItemId =
+                                                    draggedItemId ?: return@detectDragGesturesAfterLongPress
+                                                val layoutInfo = listState.layoutInfo
+                                                val visibleItems = layoutInfo.visibleItemsInfo
+                                                val draggedItemInfo =
+                                                    visibleItems.firstOrNull { it.key == currentDraggedItemId }
+
+                                                if (draggedItemInfo != null) {
+                                                    val draggedItemCenter =
+                                                        draggedItemInfo.offset + draggedItemInfo.size / 2 + dragOffset.toInt()
+
+                                                    val targetItem = visibleItems.firstOrNull { item ->
+                                                        val itemCenter = item.offset + item.size / 2
+                                                        if (dragOffset > 0) {
+                                                            // Dragging down: item must be below current and dragged center must pass its center
+                                                            item.index > draggedItemInfo.index && draggedItemCenter > itemCenter
+                                                        } else if (dragOffset < 0) {
+                                                            // Dragging up: item must be above current and dragged center must pass its center
+                                                            item.index < draggedItemInfo.index && draggedItemCenter < itemCenter
+                                                        } else {
+                                                            false
+                                                        }
+                                                    }
+
+                                                    if (targetItem != null && targetItem.key != "spacer") {
+                                                        val fromActualIndex =
+                                                            currentLayers.indexOfFirst { it.id == currentDraggedItemId }
+                                                        val targetLayerId = targetItem.key as String
+                                                        val toActualIndex =
+                                                            currentLayers.indexOfFirst { it.id == targetLayerId }
+
+                                                        if (fromActualIndex != -1 && toActualIndex != -1) {
+                                                            // Adjust drag offset BEFORE triggering reorder to avoid frames with wrong translation
+                                                            val offsetDelta =
+                                                                (targetItem.offset - draggedItemInfo.offset).toFloat()
+                                                            dragOffset -= offsetDelta
+
+                                                            currentOnReorder(fromActualIndex, toActualIndex)
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                draggedItemId = null
+                                                dragOffset = 0f
+                                            },
+                                            onDragCancel = {
+                                                draggedItemId = null
+                                                dragOffset = 0f
+                                            }
+                                        )
+                                    }
+                            )
+
+
+                            // Layer Name
+                            Text(
+                                text = layer.name,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.DarkGray
+                            )
+
+                            // Visibility Toggle
                             IconButton(
-                                onClick = { onDeleteLayer(layer.id) },
+                                onClick = { onToggleVisibility(layer.id) },
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete Layer",
-                                    tint = Color.Red.copy(alpha = 0.7f)
+                                    imageVector = if (layer.isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle Visibility",
+                                    tint = if (layer.isVisible) Color.DarkGray else Color.LightGray
                                 )
                             }
-                        } else {
-                            Spacer(modifier = Modifier.size(32.dp))
+
+                            // Delete Layer (Disable for Layer 0)
+                            if (actualIndex > 0) {
+                                IconButton(
+                                    onClick = { onDeleteLayer(layer.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete Layer",
+                                        tint = Color.Red.copy(alpha = 0.7f)
+                                    )
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.size(32.dp))
+                            }
                         }
                     }
                 }
@@ -314,24 +359,46 @@ fun LayerManagementPanel(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LayerManagementPanelPreview() {
-    val count = 5
-    val layers = mutableListOf<LayerState>()
-    for (i in 1..count) {
-        layers.add(
-            LayerState(
-                id = UUID.randomUUID().toString(),
-                name = "Layer ${i}"
+    var layers by remember {
+        mutableStateOf(
+            listOf(
+                LayerState(id = "0", name = "Background (Layer 0)", isVisible = true),
+                LayerState(id = "1", name = "Pencil Sketch", isVisible = true),
+                LayerState(id = "2", name = "Main Outline", isVisible = true),
+                LayerState(id = "3", name = "Base Color", isVisible = true),
+                LayerState(id = "4", name = "Lighting Details", isVisible = true)
             )
         )
     }
+    var activeIndex by remember { mutableStateOf(1) }
 
     FluidVectorARTheme {
-        LayerManagementPanel(
-            layers = layers,
-            activeLayerIndex = 7
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            LayerManagementPanel(
+                layers = layers,
+                activeLayerIndex = activeIndex,
+                onAddLayer = { name ->
+                    layers = layers + LayerState(id = UUID.randomUUID().toString(), name = name)
+                },
+                onSelectLayer = { activeIndex = it },
+                onDeleteLayer = { id ->
+                    layers = layers.filter { it.id != id }
+                },
+                onToggleVisibility = { id ->
+                    layers = layers.map {
+                        if (it.id == id) it.copy(isVisible = !it.isVisible) else it
+                    }
+                },
+                onReorderLayers = { from, to ->
+                    val mutable = layers.toMutableList()
+                    val item = mutable.removeAt(from)
+                    mutable.add(to, item)
+                    layers = mutable
+                }
+            )
+        }
     }
 }
