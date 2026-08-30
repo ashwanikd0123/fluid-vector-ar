@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -123,7 +126,10 @@ fun EditorScreenView(
             onBackClick = onBackClick,
             onUndoClick = { onUndoClick() },
             onRedoClick = { onRedoClick() },
-            onSaveClick = onSaveClick
+            onSaveClick = onSaveClick,
+            modifier = Modifier
+                .statusBarsPadding()
+                .zIndex(1f)
         )
 
         Box(
@@ -153,7 +159,9 @@ fun EditorScreenView(
 
             Column(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd),
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .zIndex(2f),
                 horizontalAlignment = Alignment.End
             ) {
 

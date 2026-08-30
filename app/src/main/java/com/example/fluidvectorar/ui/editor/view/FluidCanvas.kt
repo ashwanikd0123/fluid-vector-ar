@@ -134,6 +134,7 @@ fun FluidCanvas(
 
         with(drawContext.canvas) {
             saveLayer(bounds = size.toRect(), paint = Paint())
+            clipRect(0f, 0f, size.width, size.height)
 
             // layers
             layers.forEach { layer ->
@@ -230,17 +231,6 @@ private fun screenToWorldCoordinates(
     inverseMatrix.mapPoints(points)
 
     return Offset(points[0], points[1])
-}
-
-private fun screenToWorldCoordinates(
-    screenPoint: Offset,
-    scale: Float,
-    offset: Offset
-): Offset {
-    return Offset(
-        x = (screenPoint.x - offset.x) / scale,
-        y = (screenPoint.y - offset.y) / scale
-    )
 }
 
 private fun DrawScope.drawBackgroundGrid(gridSizePx: Float) {
