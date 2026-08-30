@@ -1,8 +1,11 @@
 package com.example.fluidvectorar.ui.editor.viewmodel
 
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.example.fluidvectorar.AppRoute
 import com.example.fluidvectorar.data.repository.DrawingRepository
 import com.example.fluidvectorar.data.repository.StorageRepository
 import com.example.fluidvectorar.domain.model.LayerState
@@ -21,10 +24,18 @@ import javax.inject.Inject
 @HiltViewModel
 class EditorScreenViewModel @Inject constructor(
     val drawingRepo: DrawingRepository,
-    val storageRepo: StorageRepository
+    val storageRepo: StorageRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val editorState = MutableStateFlow(EditorUiState())
+
+    private val route: AppRoute.EditorStudio = savedStateHandle.toRoute()
+    val projectId: String = route.projectId ?: "unknown"
+
+    init {
+        loadProject(projectId)
+    }
 
     fun loadProject(projectId: String) {
         viewModelScope.launch {

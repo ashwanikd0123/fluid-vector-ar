@@ -29,9 +29,7 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
             ) {
                 composable<AppRoute.EditorStudio> {
-                    val route = it.toRoute<AppRoute.EditorStudio>()
                     EditorScreen(
-                        projectId = route.projectId ?: "unknown",
                         navController = navController
                     )
                 }

@@ -51,13 +51,9 @@ import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
 @Composable
 fun EditorScreen(
-    projectId: String,
     navController: NavController,
     viewModel: EditorScreenViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.loadProject(projectId)
-    }
 
     val editorState by viewModel.editorState.collectAsStateWithLifecycle()
 
