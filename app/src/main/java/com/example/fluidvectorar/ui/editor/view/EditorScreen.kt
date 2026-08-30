@@ -90,7 +90,9 @@ fun EditorScreen(
         },
         onReorderLayers = { fromIndex, toIndex ->
             viewModel.reorderLayers(fromIndex, toIndex)
-        }
+        },
+        canvasWidth = editorState.project?.canvasWidth ?: 1080,
+        canvasHeight = editorState.project?.canvasHeight ?: 1960
     )
 }
 
@@ -110,6 +112,8 @@ fun EditorScreenView(
     onDeleteLayer: (String) -> Unit = {},
     onSelectLayer: (Int) -> Unit = {},
     onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> },
+    canvasWidth: Int = 1080,
+    canvasHeight: Int = 1960,
 ) {
     Column(
         modifier = Modifier
@@ -141,6 +145,8 @@ fun EditorScreenView(
 
             FluidCanvas(
                 canvasState = canvasGestureState,
+                canvasWidth = canvasWidth,
+                canvasHeight = canvasHeight,
                 modifier = Modifier.fillMaxSize(),
                 layers = layers,
                 activeMode = canvasUIConfigState.activeMode,

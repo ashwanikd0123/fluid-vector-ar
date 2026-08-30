@@ -55,4 +55,39 @@ class CanvasGestureState {
         offset = Offset.Zero
         rotation = 0f
     }
+
+    fun fitToViewport(canvasWidth: Int, canvasHeight: Int) {
+        if (viewportSize == IntSize.Zero) return
+
+        val viewportWidth = viewportSize.width.toFloat()
+        val viewportHeight = viewportSize.height.toFloat()
+
+        val scaleX = viewportWidth / canvasWidth
+        val scaleY = viewportHeight / canvasHeight
+
+        // Use a slightly smaller scale to add some padding
+        val newScale = minOf(scaleX, scaleY) * 0.9f
+        scale = newScale.coerceIn(minScale, maxScale)
+
+        // Center the canvas page (0,0 to W,H) in the viewport
+        // The pivot for transformations is at viewportSize / 2
+        // We want (canvasWidth/2, canvasHeight/2) in world coords to map to (viewportWidth/2, viewportHeight/2) in screen coords
+        // Since the pivot is already at (viewportWidth/2, viewportHeight/2), 
+        // a world point (x, y) maps to screen point:
+        // screenX = pivotX + (x - pivotX) * scale + offset.x
+        // We want screenX = pivotX when x = canvasWidth / 2
+        // pivotX = pivotX + (canvasWidth/2 - pivotX) * scale + offset.x
+        // 0 = (canvasWidth/2 - pivotX) * scale + offset.x
+        // offset.x = -(canvasWidth/2 - pivotX) * scale
+
+        val pivotX = viewportWidth / 2f
+        val pivotY = viewportHeight / 2f
+
+        offset = Offset(
+            x = -(canvasWidth / 2f - pivotX) * scale,
+            y = -(canvasHeight / 2f - pivotY) * scale
+        )
+        
+        rotation = 0f
+    }
 }

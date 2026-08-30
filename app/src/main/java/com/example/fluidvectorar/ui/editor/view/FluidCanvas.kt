@@ -5,11 +5,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -36,6 +36,8 @@ import com.example.fluidvectorar.ui.editor.state.CanvasMode
 fun FluidCanvas(
     modifier: Modifier = Modifier,
     canvasState: CanvasGestureState,
+    canvasWidth: Int = 1080,
+    canvasHeight: Int = 1960,
     layers: List<LayerState> = emptyList(),
     activeMode: CanvasMode = CanvasMode.DRAW,
     isReticleEnabled: Boolean = true,
@@ -47,6 +49,13 @@ fun FluidCanvas(
     val updatedBrushStyle by rememberUpdatedState(currentBrushStyle)
     val updatedSpitStroke by rememberUpdatedState(spitStroke)
     val updatedIsReticleEnabled by rememberUpdatedState(isReticleEnabled)
+
+    // Initially fit to screen when viewport size is known OR when canvas dimensions change
+    LaunchedEffect(canvasWidth, canvasHeight, canvasState.viewportSize) {
+        if (canvasState.viewportSize != IntSize.Zero) {
+            canvasState.fitToViewport(canvasWidth, canvasHeight)
+        }
+    }
 
     Canvas(
         modifier = modifier
@@ -127,14 +136,42 @@ fun FluidCanvas(
                 rotationZ = canvasState.rotation,
             )
     ) {
+        // Draw Canvas Page Background
+        drawRect(
+            color = Color.White,
+            topLeft = Offset.Zero,
+            size = androidx.compose.ui.geometry.Size(canvasWidth.toFloat(), canvasHeight.toFloat())
+        )
+
+        // Draw Canvas Page Border/Shadow
+        drawRect(
+            color = Color.LightGray,
+            topLeft = Offset.Zero,
+            size = androidx.compose.ui.geometry.Size(canvasWidth.toFloat(), canvasHeight.toFloat()),
+            style = Stroke(width = 2f)
+        )
+
         // backgroung grid
         if (isGridEnabled) {
-            drawBackgroundGrid(gridSizePx = gridSizeDp.dp.toPx())
+            drawBackgroundGrid(
+                gridSizePx = gridSizeDp.dp.toPx(),
+                canvasWidth = canvasWidth.toFloat(),
+                canvasHeight = canvasHeight.toFloat()
+            )
         }
 
         with(drawContext.canvas) {
-            saveLayer(bounds = size.toRect(), paint = Paint())
-            clipRect(0f, 0f, size.width, size.height)
+            saveLayer(
+                bounds = androidx.compose.ui.geometry.Rect(
+                    0f,
+                    0f,
+                    canvasWidth.toFloat(),
+                    canvasHeight.toFloat()
+                ),
+                paint = Paint()
+            )
+            // Clip to canvas page
+            clipRect(0f, 0f, canvasWidth.toFloat(), canvasHeight.toFloat())
 
             // layers
             layers.forEach { layer ->
@@ -233,17 +270,21 @@ private fun screenToWorldCoordinates(
     return Offset(points[0], points[1])
 }
 
-private fun DrawScope.drawBackgroundGrid(gridSizePx: Float) {
+private fun DrawScope.drawBackgroundGrid(
+    gridSizePx: Float,
+    canvasWidth: Float,
+    canvasHeight: Float
+) {
     val gridColor = Color(0xFFE0E0E0) // Subtle Light Grey
     val strokeWidthPx = 1f
 
     // Vertical Grid Lines
     var x = 0f
-    while (x <= size.width) {
+    while (x <= canvasWidth) {
         drawLine(
             color = gridColor,
             start = Offset(x, 0f),
-            end = Offset(x, size.height),
+            end = Offset(x, canvasHeight),
             strokeWidth = strokeWidthPx
         )
         x += gridSizePx
@@ -251,11 +292,11 @@ private fun DrawScope.drawBackgroundGrid(gridSizePx: Float) {
 
     // Horizontal Grid Lines
     var y = 0f
-    while (y <= size.height) {
+    while (y <= canvasHeight) {
         drawLine(
             color = gridColor,
             start = Offset(0f, y),
-            end = Offset(size.width, y),
+            end = Offset(canvasWidth, y),
             strokeWidth = strokeWidthPx
         )
         y += gridSizePx

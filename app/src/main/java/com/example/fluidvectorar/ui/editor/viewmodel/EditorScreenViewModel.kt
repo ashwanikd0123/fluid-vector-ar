@@ -79,6 +79,17 @@ class EditorScreenViewModel @Inject constructor(
         }
     }
 
+    fun updateCanvasSize(width: Int, height: Int) {
+        editorState.update { oldState ->
+            oldState.copy(
+                project = oldState.project?.copy(
+                    canvasWidth = width,
+                    canvasHeight = height
+                )
+            )
+        }
+    }
+
     fun addStrokeToCurLayer(strokeData: StrokeData) {
         editorState.update { oldState ->
             oldState.copy(
