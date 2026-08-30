@@ -57,6 +57,7 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    debugImplementation(libs.leakcanary)
     ksp(libs.androidx.room.compiler)
 
     // Hilt
