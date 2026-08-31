@@ -22,5 +22,7 @@ class DrawingRepository @Inject constructor(
 
     suspend fun deleteLayer(layer: LayerEntity) = layerDao.deleteLayer(layer)
 
+    suspend fun deleteAllLayersInProject(projectId: String) = layerDao.deleteAllLayersInProject(projectId)
+
     suspend fun getAllLayersInProject(projectId: String) = layerDao.getAllLayersInProject(projectId)
 }

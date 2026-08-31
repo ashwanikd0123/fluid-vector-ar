@@ -9,6 +9,7 @@ data class EditorUiState(
     val project: ProjectEntity? = null,
 
     val isLoadingProject: Boolean = true,
+    val isSavingProject: Boolean = false,
 
     val layers: List<LayerState> = listOf(),
     val activeLayerIndex: Int = 0,

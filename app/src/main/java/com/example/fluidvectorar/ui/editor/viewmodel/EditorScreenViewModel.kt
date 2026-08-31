@@ -10,6 +10,7 @@ import com.example.fluidvectorar.data.repository.DrawingRepository
 import com.example.fluidvectorar.data.repository.StorageRepository
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
+import com.example.fluidvectorar.domain.model.toLayerEntity
 import com.example.fluidvectorar.domain.model.toLayerState
 import com.example.fluidvectorar.ui.editor.state.CanvasAction
 import com.example.fluidvectorar.ui.editor.state.EditorUiState
@@ -39,6 +40,35 @@ class EditorScreenViewModel @Inject constructor(
 
     init {
         loadProject(projectId)
+    }
+
+    fun saveProject() {
+        val currentProject = editorState.value.project ?: return
+        val currentLayers = editorState.value.layers
+
+        viewModelScope.launch(Dispatchers.IO) {
+            editorState.update { it.copy(isSavingProject = true) }
+            try {
+                val updatedProject = currentProject.copy(updatedAt = System.currentTimeMillis())
+                drawingRepo.addProject(updatedProject)
+
+                drawingRepo.deleteAllLayersInProject(updatedProject.id)
+
+                currentLayers.forEachIndexed { index, layerState ->
+                    val layerEntity = layerState.toLayerEntity(
+                        projectId = updatedProject.id,
+                        layerIndex = index,
+                        strokesJsonPath = storageRepo.getLayerFilePath(updatedProject.id, layerState.id)
+                    )
+                    drawingRepo.addOrUpdateLayer(layerEntity)
+                    storageRepo.saveStrokesToFile(updatedProject.id, layerState.id, layerState.strokes)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                editorState.update { it.copy(isSavingProject = false) }
+            }
+        }
     }
 
     fun loadProject(projectId: String) {
