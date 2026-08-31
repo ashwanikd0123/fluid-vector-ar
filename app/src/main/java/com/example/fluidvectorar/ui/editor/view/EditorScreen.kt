@@ -51,25 +51,21 @@ import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 
 @Composable
 fun EditorScreen(
-    navController: NavController,
+    @Suppress("UNUSED_PARAMETER") navController: NavController,
     viewModel: EditorScreenViewModel = hiltViewModel()
 ) {
 
     val editorState by viewModel.editorState.collectAsStateWithLifecycle()
 
     EditorScreenView(
-        title = if (editorState.project != null) editorState.project!!.title else "Loading...",
-        onBackClick = {
-            navController.popBackStack(AppRoute.Home, inclusive = false)
-        },
         onSaveClick = {
             TODO()
         },
         onUndoClick = {
-            TODO()
+            viewModel.undo()
         },
         onRedoClick = {
-            TODO()
+            viewModel.redo()
         },
         spitStroke = { strokeData ->
             viewModel.addStrokeToCurLayer(strokeData)
@@ -99,8 +95,6 @@ fun EditorScreen(
 
 @Composable
 fun EditorScreenView(
-    title: String,
-    onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onRedoClick: () -> Unit = {},
@@ -115,118 +109,108 @@ fun EditorScreenView(
     canvasWidth: Int = 1080,
     canvasHeight: Int = 1960,
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val canvasGestureState = remember { CanvasGestureState() }
+        val canvasUIConfigState = remember { CanvasUIConfigState() }
+
+        var activeDialog by remember { mutableStateOf(SettingDialogState.NONE) }
+
+        FluidCanvas(
+            canvasState = canvasGestureState,
+            canvasWidth = canvasWidth,
+            canvasHeight = canvasHeight,
+            modifier = Modifier.fillMaxSize(),
+            layers = layers,
+            activeMode = canvasUIConfigState.activeMode,
+            isReticleEnabled = canvasUIConfigState.isReticleEnabled,
+            isGridEnabled = canvasUIConfigState.isGridEnabled,
+            gridSizeDp = canvasUIConfigState.gridSizeDp,
+            currentBrushStyle = canvasUIConfigState.currentBrushStyle,
+            spitStroke = { strokeData ->
+                spitStroke(strokeData)
+            }
+        )
 
         EditorTopBar(
-            projectTitle = title,
-            onBackClick = onBackClick,
             onUndoClick = { onUndoClick() },
             onRedoClick = { onRedoClick() },
             onSaveClick = onSaveClick,
             modifier = Modifier
+                .align(Alignment.TopCenter)
                 .statusBarsPadding()
                 .zIndex(1f)
         )
 
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .zIndex(2f),
+            horizontalAlignment = Alignment.End
         ) {
-
-            val canvasGestureState = remember { CanvasGestureState() }
-            val canvasUIConfigState = remember { CanvasUIConfigState() }
-
-            var activeDialog by remember { mutableStateOf(SettingDialogState.NONE) }
-
-            FluidCanvas(
-                canvasState = canvasGestureState,
-                canvasWidth = canvasWidth,
-                canvasHeight = canvasHeight,
-                modifier = Modifier.fillMaxSize(),
+            SettingDialogs(
+                activeDialog = activeDialog,
+                canvasUIConfigState = canvasUIConfigState,
+                onActiveDialogChange = { activeDialog = it },
                 layers = layers,
-                activeMode = canvasUIConfigState.activeMode,
-                isReticleEnabled = canvasUIConfigState.isReticleEnabled,
-                isGridEnabled = canvasUIConfigState.isGridEnabled,
-                gridSizeDp = canvasUIConfigState.gridSizeDp,
-                currentBrushStyle = canvasUIConfigState.currentBrushStyle,
-                spitStroke = { strokeData ->
-                    spitStroke(strokeData)
+                activeLayerIndex = activeLayerIndex,
+                onAddLayer = { layerName ->
+                    onAddLayer(layerName)
+                },
+                onToggleVisibility = { layerId ->
+                    onToggleVisibility(layerId)
+                },
+                onDeleteLayer = { layerId ->
+                    onDeleteLayer(layerId)
+                },
+                onSelectLayer = { layerId ->
+                    onSelectLayer(layerId)
+                },
+                onReorderLayers = { fromIndex, toIndex ->
+                    onReorderLayers(fromIndex, toIndex)
                 }
             )
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .navigationBarsPadding()
-                    .zIndex(2f),
-                horizontalAlignment = Alignment.End
-            ) {
-
-                SettingDialogs(
-                    activeDialog = activeDialog,
-                    canvasUIConfigState = canvasUIConfigState,
-                    onActiveDialogChange = { activeDialog = it },
-                    layers = layers,
-                    activeLayerIndex = activeLayerIndex,
-                    onAddLayer = { layerName ->
-                        onAddLayer(layerName)
-                    },
-                    onToggleVisibility = { layerId ->
-                        onToggleVisibility(layerId)
-                    },
-                    onDeleteLayer = { layerId ->
-                        onDeleteLayer(layerId)
-                    },
-                    onSelectLayer = { layerId ->
-                        onSelectLayer(layerId)
-                    },
-                    onReorderLayers = { fromIndex, toIndex ->
-                        onReorderLayers(fromIndex, toIndex)
-                    }
-                )
-
-                ExpandableBottomToolbar(
-                    modifier = Modifier,
-                    canvasMode = canvasUIConfigState.activeMode,
-                    onClickCanvasModeChangeButton = { newCanvasMode ->
-                        canvasUIConfigState.activeMode = newCanvasMode
-                    },
-                    currentBrushStyle = canvasUIConfigState.currentBrushStyle,
-                    onColorClick = {
-                        if (activeDialog == SettingDialogState.COLOR_SETTING) {
-                            activeDialog = SettingDialogState.NONE
-                            return@ExpandableBottomToolbar
-                        }
-                        activeDialog = SettingDialogState.COLOR_SETTING
-                    },
-                    onBrushSettingsClick = {
-                        if (activeDialog == SettingDialogState.PENCIL_SETTING) {
-                            activeDialog = SettingDialogState.NONE
-                            return@ExpandableBottomToolbar
-                        }
-                        activeDialog = SettingDialogState.PENCIL_SETTING
-                    },
-                    onLayersClick = {
-                        if (activeDialog == SettingDialogState.LAYER_SETTING) {
-                            activeDialog = SettingDialogState.NONE
-                            return@ExpandableBottomToolbar
-                        }
-                        activeDialog = SettingDialogState.LAYER_SETTING
-                    },
-                    onBrushStyleChange = { newBrushStyle ->
+            ExpandableBottomToolbar(
+                modifier = Modifier,
+                canvasMode = canvasUIConfigState.activeMode,
+                onClickCanvasModeChangeButton = { newCanvasMode ->
+                    canvasUIConfigState.activeMode = newCanvasMode
+                },
+                currentBrushStyle = canvasUIConfigState.currentBrushStyle,
+                onColorClick = {
+                    if (activeDialog == SettingDialogState.COLOR_SETTING) {
                         activeDialog = SettingDialogState.NONE
-                        canvasUIConfigState.currentBrushStyle = newBrushStyle
-                    },
-                    onExpandedStateChange = {
-                        activeDialog = SettingDialogState.NONE
+                        return@ExpandableBottomToolbar
                     }
-                )
-            }
+                    activeDialog = SettingDialogState.COLOR_SETTING
+                },
+                onBrushSettingsClick = {
+                    if (activeDialog == SettingDialogState.PENCIL_SETTING) {
+                        activeDialog = SettingDialogState.NONE
+                        return@ExpandableBottomToolbar
+                    }
+                    activeDialog = SettingDialogState.PENCIL_SETTING
+                },
+                onLayersClick = {
+                    if (activeDialog == SettingDialogState.LAYER_SETTING) {
+                        activeDialog = SettingDialogState.NONE
+                        return@ExpandableBottomToolbar
+                    }
+                    activeDialog = SettingDialogState.LAYER_SETTING
+                },
+                onBrushStyleChange = { newBrushStyle ->
+                    activeDialog = SettingDialogState.NONE
+                    canvasUIConfigState.currentBrushStyle = newBrushStyle
+                },
+                onExpandedStateChange = {
+                    activeDialog = SettingDialogState.NONE
+                }
+            )
         }
     }
 }
@@ -323,8 +307,6 @@ private fun SettingDialogs(
 @Composable
 fun EditorScreenViewPreview() {
     FluidVectorARTheme {
-        EditorScreenView(
-            title = "Preview"
-        )
+        EditorScreenView()
     }
 }

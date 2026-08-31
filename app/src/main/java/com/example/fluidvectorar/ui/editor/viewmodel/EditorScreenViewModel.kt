@@ -11,7 +11,9 @@ import com.example.fluidvectorar.data.repository.StorageRepository
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
 import com.example.fluidvectorar.domain.model.toLayerState
+import com.example.fluidvectorar.ui.editor.state.CanvasAction
 import com.example.fluidvectorar.ui.editor.state.EditorUiState
+import com.example.fluidvectorar.ui.editor.state.UndoRedoManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +33,9 @@ class EditorScreenViewModel @Inject constructor(
     val editorState = MutableStateFlow(EditorUiState())
 
     private val route: AppRoute.EditorStudio = savedStateHandle.toRoute()
-    val projectId: String = route.projectId ?: "unknown"
+    private val projectId: String = route.projectId ?: "unknown"
+
+    private val undoRedoManager: UndoRedoManager = UndoRedoManager()
 
     init {
         loadProject(projectId)
@@ -91,6 +95,13 @@ class EditorScreenViewModel @Inject constructor(
     }
 
     fun addStrokeToCurLayer(strokeData: StrokeData) {
+        undoRedoManager.addAction(
+            CanvasAction.CommitStroke(
+                layerId = editorState.value.activeLayer?.id ?: "unknown_layer",
+                stroke = strokeData
+            )
+        )
+
         editorState.update { oldState ->
             oldState.copy(
                 layers = oldState.layers.map { layerState ->
@@ -104,6 +115,16 @@ class EditorScreenViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun undo() {
+        val canvasAction = undoRedoManager.popUndo() ?: return
+        processAction(canvasAction, isUndo = true)
+    }
+
+    fun redo() {
+        val canvasAction = undoRedoManager.popRedo() ?: return
+        processAction(canvasAction, isUndo = false)
     }
 
     fun addNewLayer(layerName: String) {
@@ -201,6 +222,33 @@ class EditorScreenViewModel @Inject constructor(
             oldState.copy(
                 layers = mutableLayers.toList(),
                 activeLayerIndex = newActiveIndex
+            )
+        }
+    }
+
+    private fun processAction(action: CanvasAction, isUndo: Boolean) {
+        editorState.update { oldState ->
+
+            val (layerId, targetStroke) = when (action) {
+                is CanvasAction.CommitStroke -> action.layerId to action.stroke
+            }
+
+            if (oldState.layers.none { it.id == layerId }) return@update oldState
+
+            oldState.copy(
+                layers = oldState.layers.map { layer ->
+                    if (layer.id == layerId) {
+                        layer.copy(
+                            strokes = if (isUndo) {
+                                layer.strokes - targetStroke
+                            } else {
+                                layer.strokes + targetStroke
+                            }
+                        )
+                    } else {
+                        layer
+                    }
+                }
             )
         }
     }
