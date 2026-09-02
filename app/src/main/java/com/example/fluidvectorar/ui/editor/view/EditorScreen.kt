@@ -1,12 +1,12 @@
 package com.example.fluidvectorar.ui.editor.view
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +35,6 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.fluidvectorar.AppRoute
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
 import com.example.fluidvectorar.ui.editor.components.BrushSettingsPanel
@@ -49,7 +47,6 @@ import com.example.fluidvectorar.ui.editor.state.CanvasUIConfigState
 import com.example.fluidvectorar.ui.editor.state.SettingDialogState
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
-
 
 
 @Composable
@@ -144,6 +141,10 @@ fun EditorScreenView(
             onUndoClick = { onUndoClick() },
             onRedoClick = { onRedoClick() },
             onSaveClick = onSaveClick,
+            isReticleEnabled = canvasUIConfigState.isReticleEnabled,
+            onToggleReticle = {
+                canvasUIConfigState.isReticleEnabled = !canvasUIConfigState.isReticleEnabled
+            },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()

@@ -3,6 +3,7 @@ package com.example.fluidvectorar.ui.home.view
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -49,6 +50,11 @@ fun HomeRowView(project: ProjectEntity, onClick: (String) -> Unit) {
             .height(100.dp)
             .width(100.dp),
             project.thumbnailPath
+        )
+
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
         )
 
         Text(

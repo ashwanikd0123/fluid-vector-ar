@@ -24,6 +24,8 @@ fun EditorTopBar(
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onSaveClick: () -> Unit,
+    isReticleEnabled: Boolean,
+    onToggleReticle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -48,7 +50,7 @@ fun EditorTopBar(
             }
         }
 
-        // Right part: Undo & Redo with rounded background
+        // Right part: Undo, Redo & Reticle with rounded background
         Card(
             shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -72,6 +74,13 @@ fun EditorTopBar(
                         tint = Color.DarkGray
                     )
                 }
+                IconButton(onClick = onToggleReticle) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_reticle),
+                        contentDescription = "Toggle Reticle",
+                        tint = if (isReticleEnabled) Color.Red else Color.LightGray
+                    )
+                }
             }
         }
     }
@@ -82,9 +91,11 @@ fun EditorTopBar(
 fun EditorTopBarPreview() {
     FluidVectorARTheme {
         EditorTopBar(
-            {},
-            {},
-            {}
+            onUndoClick = {},
+            onRedoClick = {},
+            onSaveClick = {},
+            isReticleEnabled = true,
+            onToggleReticle = {}
         )
     }
 }
