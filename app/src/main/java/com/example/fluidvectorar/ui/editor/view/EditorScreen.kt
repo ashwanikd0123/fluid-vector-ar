@@ -122,10 +122,10 @@ fun EditorScreenView(
         var activeDialog by remember { mutableStateOf(SettingDialogState.NONE) }
 
         FluidCanvas(
+            modifier = Modifier.fillMaxSize(),
             canvasState = canvasGestureState,
             canvasWidth = canvasWidth,
             canvasHeight = canvasHeight,
-            modifier = Modifier.fillMaxSize(),
             layers = layers,
             activeMode = canvasUIConfigState.activeMode,
             isReticleEnabled = canvasUIConfigState.isReticleEnabled,

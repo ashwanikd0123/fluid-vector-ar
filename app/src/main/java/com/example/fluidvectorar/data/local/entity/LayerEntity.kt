@@ -31,5 +31,10 @@ data class LayerEntity(
     val blendMode: String = "NORMAL",
     val isVisible: Boolean = true,
     val isLocked: Boolean = false,
-    val strokesJsonPath: String
+    val strokesJsonPath: String,
+    val imagePath: String? = null,
+    val imageOffsetX: Float = 0f,
+    val imageOffsetY: Float = 0f,
+    val imageScale: Float = 1f,
+    val imageRotation: Float = 0f
 )

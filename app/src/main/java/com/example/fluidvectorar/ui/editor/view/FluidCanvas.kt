@@ -7,16 +7,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -31,6 +35,7 @@ import com.example.fluidvectorar.domain.model.StrokeData
 import com.example.fluidvectorar.helper.BezierSmoother
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasMode
+import com.example.fluidvectorar.ui.editor.utils.rememberImageBitmapFromPath
 
 @Composable
 fun FluidCanvas(
@@ -44,11 +49,20 @@ fun FluidCanvas(
     isGridEnabled: Boolean = true,
     gridSizeDp: Float = 20f,
     currentBrushStyle: BrushStyle = BrushStyle(colorHex = 0xFF000000, strokeWidth = 8f),
-    spitStroke: (StrokeData) -> Unit = {}
+    spitStroke: (StrokeData) -> Unit = {},
 ) {
     val updatedBrushStyle by rememberUpdatedState(currentBrushStyle)
     val updatedSpitStroke by rememberUpdatedState(spitStroke)
     val updatedIsReticleEnabled by rememberUpdatedState(isReticleEnabled)
+
+    val layerBitmaps = remember { mutableMapOf<String, ImageBitmap?>() }
+
+    layers.forEach { layer ->
+        key(layer.id) {
+            val bitmap = rememberImageBitmapFromPath(path = layer.imagePath)
+            layerBitmaps[layer.id] = bitmap
+        }
+    }
 
     // Initially fit to screen when viewport size is known OR when canvas dimensions change
     LaunchedEffect(canvasWidth, canvasHeight, canvasState.viewportSize) {
@@ -151,7 +165,7 @@ fun FluidCanvas(
             style = Stroke(width = 2f)
         )
 
-        // backgroung grid
+        // background grid
         if (isGridEnabled) {
             drawBackgroundGrid(
                 gridSizePx = gridSizeDp.dp.toPx(),
@@ -176,6 +190,22 @@ fun FluidCanvas(
             // layers
             layers.forEach { layer ->
                 if (layer.isVisible) {
+                    if (layer.imagePath != null) {
+                        val bitmapToDraw = layerBitmaps[layer.id]
+                        if (bitmapToDraw != null) {
+                            withTransform({
+                                translate(layer.imageOffset.x, layer.imageOffset.y)
+                                scale(layer.imageScale)
+                                rotate(layer.imageRotation)
+                            }) {
+                                drawImage(
+                                    image = bitmapToDraw,
+                                    alpha = layer.opacity
+                                )
+                            }
+                        }
+                    }
+
                     layer.strokes.forEach { stroke ->
                         val pathPoints = stroke.points.map { Offset(it.x, it.y) }
 
@@ -307,6 +337,6 @@ private fun DrawScope.drawBackgroundGrid(
 @Composable
 fun PreviewFluidCanvas() {
     FluidCanvas(
-        canvasState = CanvasGestureState()
+        canvasState = CanvasGestureState(),
     )
 }
