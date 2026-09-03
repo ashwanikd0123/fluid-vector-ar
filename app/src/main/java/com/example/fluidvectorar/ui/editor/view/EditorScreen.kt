@@ -1,6 +1,7 @@
 package com.example.fluidvectorar.ui.editor.view
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +43,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation.NavController
 import com.example.fluidvectorar.domain.model.LayerState
 import com.example.fluidvectorar.domain.model.StrokeData
@@ -57,6 +61,7 @@ import com.example.fluidvectorar.ui.editor.utils.saveImageAndCalculateCenter
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
@@ -65,14 +70,24 @@ fun EditorScreen(
     @Suppress("UNUSED_PARAMETER") navController: NavController,
     viewModel: EditorScreenViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(viewModel.uiEvent, lifecycleOwner) {
+        viewModel.uiEvent
+            .flowWithLifecycle(lifecycleOwner.lifecycle)
+            .collectLatest { message ->
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+    }
 
     val editorState by viewModel.editorState.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
@@ -82,6 +97,7 @@ fun EditorScreen(
         if (uri != null) {
             coroutineScope.launch {
                 viewModel.setImportingImage(true)
+
                 val result = saveImageAndCalculateCenter(
                     context = context,
                     uri = uri,
@@ -93,6 +109,7 @@ fun EditorScreen(
                     val (path, offset) = result
                     viewModel.addImageLayer(path, offset)
                 }
+
                 viewModel.setImportingImage(false)
             }
         }

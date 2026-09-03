@@ -18,7 +18,9 @@ import com.example.fluidvectorar.ui.editor.state.EditorUiState
 import com.example.fluidvectorar.ui.editor.state.UndoRedoManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +33,9 @@ class EditorScreenViewModel @Inject constructor(
     val storageRepo: StorageRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val _uiEvent = Channel<String>()
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     val editorState = MutableStateFlow(EditorUiState())
 
@@ -91,17 +96,37 @@ class EditorScreenViewModel @Inject constructor(
                 drawingRepo.getAllLayersInProject(project.id)
             }
 
-            val layers = withContext(Dispatchers.IO) {
+            val loadedLayers = withContext(Dispatchers.IO) {
                 layerEntities.map { layerE ->
                     val strokes = storageRepo.readStrokesFromLayer(project.id, layerE.id)
                     layerE.toLayerState(strokes)
                 }
             }
 
+            val layers: List<LayerState> = if (loadedLayers.isEmpty()) {
+                listOf(
+                    LayerState(
+                        id = UUID.randomUUID().toString(),
+                        name = "Background"
+                    ),
+                    LayerState(
+                        id = UUID.randomUUID().toString(),
+                        name = "Initial Layer"
+                    )
+                )
+            } else if (loadedLayers.count() == 1) {
+                loadedLayers + LayerState(
+                    id = UUID.randomUUID().toString(),
+                    name = "Initial Layer"
+                )
+            } else {
+                loadedLayers
+            }
+
             editorState.update {
                 it.copy(
                     layers = layers,
-                    activeLayerIndex = 0
+                    activeLayerIndex = layers.count() - 1
                 )
             }
 
@@ -218,6 +243,13 @@ class EditorScreenViewModel @Inject constructor(
     }
 
     fun deleteLayer(layerId: String) {
+        if (editorState.value.layers.count() <= 2) {
+            viewModelScope.launch {
+                _uiEvent.send("At least one layer is necessary")
+            }
+            return
+        }
+
         editorState.update { oldState ->
             val deletedIndex = oldState.layers.indexOfFirst { it.id == layerId }
 

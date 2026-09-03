@@ -56,21 +56,8 @@ class HomeScreenViewModel @Inject constructor(
                 updatedAt = time
             )
 
-
-
             withContext(Dispatchers.IO) {
                 drawingRepo.addProject(project)
-
-                val fixedLayerId = UUID.randomUUID().toString()
-                val fixedLayer = LayerEntity(
-                    id = fixedLayerId,
-                    projectId = project.id,
-                    layerIndex = 0,
-                    name = "background",
-                    strokesJsonPath = storageRepo.getLayerFilePath(project.id, fixedLayerId),
-                )
-
-                drawingRepo.addOrUpdateLayer(fixedLayer)
             }
 
             homeScreenState.isCreatingNewProject = false
