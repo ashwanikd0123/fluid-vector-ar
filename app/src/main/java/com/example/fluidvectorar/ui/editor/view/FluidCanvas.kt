@@ -45,6 +45,8 @@ fun FluidCanvas(
     canvasWidth: Int = 1080,
     canvasHeight: Int = 1960,
     layers: List<LayerState> = emptyList(),
+    activeLayerIndex: Int = 0,
+    updateActiveImageTransform: (Offset, Offset, Float, Float) -> Unit = { _, _, _, _ -> },
     activeMode: CanvasMode = CanvasMode.DRAW,
     isReticleEnabled: Boolean = true,
     isGridEnabled: Boolean = true,
@@ -73,13 +75,15 @@ fun FluidCanvas(
         }
     }
 
+    val isImageLayer = if (activeLayerIndex in 0..<layers.count()) layers[activeLayerIndex].imagePath != null else false
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
             .onSizeChanged { size ->
                 canvasState.viewportSize = size
             }
-            .pointerInput(activeMode) {
+            .pointerInput(activeMode, isImageLayer) {
                 if (activeMode == CanvasMode.PAN_ZOOM) {
                     detectTransformGestures { _, pan, zoom, rotation ->
                         canvasState.updateTransformations(
@@ -87,6 +91,10 @@ fun FluidCanvas(
                             panChange = pan,
                             rotationChange = rotation
                         )
+                    }
+                } else if (isImageLayer) {
+                    detectTransformGestures { centroid, pan, zoom, rotation ->
+                        updateActiveImageTransform(centroid, pan, zoom, rotation)
                     }
                 } else {
                     awaitPointerEventScope {

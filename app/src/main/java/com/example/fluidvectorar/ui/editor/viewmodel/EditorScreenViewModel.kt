@@ -147,6 +147,24 @@ class EditorScreenViewModel @Inject constructor(
         }
     }
 
+    fun updateActiveImageTransform(pan: Offset, zoom: Float, rotationDelta: Float) {
+        editorState.update { oldState ->
+            val activeIndex = oldState.activeLayerIndex
+            val activeLayer = oldState.layers.getOrNull(activeIndex)
+
+            if (activeLayer?.imagePath == null) return@update oldState
+
+            val mutableLayers = oldState.layers.toMutableList()
+            mutableLayers[activeIndex] = activeLayer.copy(
+                imageOffset = activeLayer.imageOffset + pan,
+                imageScale = activeLayer.imageScale * zoom,
+                imageRotation = activeLayer.imageRotation + rotationDelta
+            )
+
+            oldState.copy(layers = mutableLayers.toList())
+        }
+    }
+
     fun updateCanvasSize(width: Int, height: Int) {
         editorState.update { oldState ->
             oldState.copy(

@@ -31,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalConfiguration
@@ -115,6 +116,9 @@ fun EditorScreen(
         },
         layers = editorState.layers,
         activeLayerIndex = editorState.activeLayerIndex,
+        updateActiveImageTransform = { centroid, pan, zoom, rotation ->
+            viewModel.updateActiveImageTransform(pan, zoom, rotation)
+        },
         onAddLayer = { layerName ->
             viewModel.addNewLayer(layerName)
         },
@@ -146,6 +150,7 @@ fun EditorScreenView(
     spitStroke: (StrokeData) -> Unit = {},
     layers: List<LayerState> = emptyList(),
     activeLayerIndex: Int = 0,
+    updateActiveImageTransform: (Offset, Offset, Float, Float) -> Unit = { _, _, _, _ -> },
     onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
     onToggleVisibility: (String) -> Unit = {},
     onDeleteLayer: (String) -> Unit = {},
@@ -171,6 +176,10 @@ fun EditorScreenView(
             canvasWidth = canvasWidth,
             canvasHeight = canvasHeight,
             layers = layers,
+            activeLayerIndex = activeLayerIndex,
+            updateActiveImageTransform = { centroid, pan, zoom, rotation ->
+                updateActiveImageTransform(centroid, pan, zoom, rotation)
+            },
             activeMode = canvasUIConfigState.activeMode,
             isReticleEnabled = canvasUIConfigState.isReticleEnabled,
             isGridEnabled = canvasUIConfigState.isGridEnabled,
