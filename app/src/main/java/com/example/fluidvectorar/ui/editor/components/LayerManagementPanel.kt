@@ -29,8 +29,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +37,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +72,7 @@ fun LayerManagementPanel(
     onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
     onToggleVisibility: (String) -> Unit = {},
     onDeleteLayer: (String) -> Unit = {},
+    onUpdateOpacity: (String, Float) -> Unit = { _, _ -> },
     onSelectLayer: (Int) -> Unit = {},
     onReorderLayers: (fromActualIndex: Int, toActualIndex: Int) -> Unit = { _, _ -> } // New Callback
 ) {
@@ -78,6 +80,9 @@ fun LayerManagementPanel(
     var isAddingLayer by remember { mutableStateOf(false) }
     var newLayerName by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+
+    // State for Layer Settings
+    var settingsLayerId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(isAddingLayer) {
         if (isAddingLayer) {
@@ -176,7 +181,9 @@ fun LayerManagementPanel(
             // 3. Layer List
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 itemsIndexed(
@@ -324,32 +331,114 @@ fun LayerManagementPanel(
                                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.DarkGray
                             )
 
-                            // Visibility Toggle
+                            // Gear Icon for Settings
                             IconButton(
-                                onClick = { onToggleVisibility(layer.id) },
+                                onClick = { settingsLayerId = layer.id },
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
-                                    imageVector = if (layer.isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = "Toggle Visibility",
-                                    tint = if (layer.isVisible) Color.DarkGray else Color.LightGray
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Layer Settings",
+                                    tint = if (settingsLayerId == layer.id) MaterialTheme.colorScheme.primary else Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Layer Settings "Bottom Sheet" (Internal to Dialog)
+            AnimatedVisibility(visible = settingsLayerId != null) {
+                val layer = layers.find { it.id == settingsLayerId }
+                if (layer != null) {
+                    Column {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = Color.LightGray.copy(alpha = 0.5f)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Settings: ${layer.name}",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                            IconButton(
+                                onClick = { settingsLayerId = null },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Close Settings")
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .fillMaxWidth()
+                        ) {
+                            // Visibility Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Visible", style = MaterialTheme.typography.bodySmall)
+                                Switch(
+                                    checked = layer.isVisible,
+                                    onCheckedChange = { onToggleVisibility(layer.id) },
+                                    modifier = Modifier.graphicsLayer(scaleX = 0.7f, scaleY = 0.7f)
                                 )
                             }
 
-                            // Delete Layer (Disable for Layer 0)
-                            if (actualIndex > 0) {
-                                IconButton(
-                                    onClick = { onDeleteLayer(layer.id) },
-                                    modifier = Modifier.size(32.dp)
+                            // Opacity Row
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Opacity", style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        "${(layer.opacity * 100).toInt()}%",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Slider(
+                                    value = layer.opacity,
+                                    onValueChange = { onUpdateOpacity(layer.id, it) },
+                                    valueRange = 0f..1f,
+                                    modifier = Modifier.height(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Delete Action (Disable for Layer 0 if applicable)
+                            if (layers.indexOf(layer) > 0) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onDeleteLayer(layer.id)
+                                            settingsLayerId = null
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete Layer",
-                                        tint = Color.Red.copy(alpha = 0.7f)
+                                        contentDescription = "Delete",
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(20.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Delete Layer", color = Color.Red, style = MaterialTheme.typography.bodyMedium)
                                 }
-                            } else {
-                                Spacer(modifier = Modifier.size(32.dp))
                             }
                         }
                     }
@@ -390,6 +479,11 @@ fun LayerManagementPanelPreview() {
                 onToggleVisibility = { id ->
                     layers = layers.map {
                         if (it.id == id) it.copy(isVisible = !it.isVisible) else it
+                    }
+                },
+                onUpdateOpacity = { id, opacity ->
+                    layers = layers.map {
+                        if (it.id == id) it.copy(opacity = opacity) else it
                     }
                 },
                 onReorderLayers = { from, to ->

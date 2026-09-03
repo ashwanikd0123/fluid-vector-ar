@@ -145,6 +145,9 @@ fun EditorScreen(
         onDeleteLayer = { layerId ->
             viewModel.deleteLayer(layerId)
         },
+        onUpdateOpacity = { layerId, opacity ->
+            viewModel.updateLayerOpacity(layerId, opacity)
+        },
         onSelectLayer = { layerId ->
             viewModel.setSelectedLayer(layerId)
         },
@@ -171,6 +174,7 @@ fun EditorScreenView(
     onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
     onToggleVisibility: (String) -> Unit = {},
     onDeleteLayer: (String) -> Unit = {},
+    onUpdateOpacity: (String, Float) -> Unit = { _, _ -> },
     onSelectLayer: (Int) -> Unit = {},
     onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> },
     canvasWidth: Int = 1080,
@@ -243,6 +247,9 @@ fun EditorScreenView(
                 },
                 onDeleteLayer = { layerId ->
                     onDeleteLayer(layerId)
+                },
+                onUpdateOpacity = { layerId, opacity ->
+                    onUpdateOpacity(layerId, opacity)
                 },
                 onSelectLayer = { layerId ->
                     onSelectLayer(layerId)
@@ -319,6 +326,7 @@ private fun SettingDialogs(
     onAddLayer: (String) -> Unit = {}, // Updated to pass layer name
     onToggleVisibility: (String) -> Unit = {},
     onDeleteLayer: (String) -> Unit = {},
+    onUpdateOpacity: (String, Float) -> Unit = { _, _ -> },
     onSelectLayer: (Int) -> Unit = {},
     onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> }
 ) {
@@ -385,6 +393,9 @@ private fun SettingDialogs(
                         },
                         onDeleteLayer = { layerId ->
                             onDeleteLayer(layerId)
+                        },
+                        onUpdateOpacity = { layerId, opacity ->
+                            onUpdateOpacity(layerId, opacity)
                         },
                         onSelectLayer = { layerId ->
                             onSelectLayer(layerId)

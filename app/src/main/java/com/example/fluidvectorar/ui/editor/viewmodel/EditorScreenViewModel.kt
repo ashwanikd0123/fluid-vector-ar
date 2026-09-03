@@ -306,6 +306,16 @@ class EditorScreenViewModel @Inject constructor(
         }
     }
 
+    fun updateLayerOpacity(layerId: String, opacity: Float) {
+        editorState.update { oldState ->
+            oldState.copy(
+                layers = oldState.layers.map { layer ->
+                    if (layer.id == layerId) layer.copy(opacity = opacity) else layer
+                }
+            )
+        }
+    }
+
     fun reorderLayers(fromIndex: Int, toIndex: Int) {
         editorState.update { oldState ->
             val currentLayers = oldState.layers
