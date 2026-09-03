@@ -236,7 +236,7 @@ fun FluidCanvas(
                                         cap = StrokeCap.Round,
                                         join = StrokeJoin.Round
                                     ),
-                                    alpha = layer.opacity,
+                                    alpha = layer.opacity * stroke.brushStyle.opacity,
                                     blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
                                 )
                             }
@@ -254,6 +254,7 @@ fun FluidCanvas(
                                     cap = StrokeCap.Round,
                                     join = StrokeJoin.Round
                                 ),
+                                alpha = layer.opacity * currentBrushStyle.opacity,
                                 blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
                             )
                         }

@@ -28,8 +28,10 @@ import kotlin.math.roundToInt
 fun BrushSettingsPanel(
     modifier: Modifier = Modifier,
     currentStrokeWidth: Float = 50f,
+    currentOpacity: Float = 1f,
     currentColorHex: Long = 0xff000000,
     onStrokeWidthChanged: (Float) -> Unit = {},
+    onOpacityChanged: (Float) -> Unit = {},
 ) {
     Card(
         modifier = modifier.width(240.dp),
@@ -53,7 +55,8 @@ fun BrushSettingsPanel(
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
                         color = Color(currentColorHex),
-                        radius = currentStrokeWidth / 2f
+                        radius = currentStrokeWidth / 2f,
+                        alpha = currentOpacity
                     )
                 }
             }
@@ -70,6 +73,22 @@ fun BrushSettingsPanel(
 
             Text(
                 text = "${currentStrokeWidth.roundToInt()} px",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 4. Opacity Slider
+            Slider(
+                value = currentOpacity,
+                onValueChange = onOpacityChanged,
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "Opacity: ${(currentOpacity * 100).roundToInt()}%",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.DarkGray
             )

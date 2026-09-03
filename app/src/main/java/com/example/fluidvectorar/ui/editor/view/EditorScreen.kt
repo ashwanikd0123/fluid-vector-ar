@@ -356,6 +356,7 @@ private fun SettingDialogs(
                 SettingDialogState.PENCIL_SETTING -> {
                     BrushSettingsPanel(
                         currentStrokeWidth = canvasUIConfigState.currentBrushStyle.strokeWidth,
+                        currentOpacity = canvasUIConfigState.currentBrushStyle.opacity,
                         currentColorHex = canvasUIConfigState.currentBrushStyle.colorHex,
                         onStrokeWidthChanged = { newWidth ->
                             canvasUIConfigState.currentBrushStyle =
@@ -363,6 +364,12 @@ private fun SettingDialogs(
                                     strokeWidth = newWidth
                                 )
                         },
+                        onOpacityChanged = { newOpacity ->
+                            canvasUIConfigState.currentBrushStyle =
+                                canvasUIConfigState.currentBrushStyle.copy(
+                                    opacity = newOpacity
+                                )
+                        }
                     )
                 }
 
