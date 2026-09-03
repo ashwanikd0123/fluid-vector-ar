@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -75,7 +76,9 @@ fun FluidCanvas(
         }
     }
 
-    val isImageLayer = if (activeLayerIndex in 0..<layers.count()) layers[activeLayerIndex].imagePath != null else false
+
+    val activeLayer = if (activeLayerIndex in 0..<layers.count()) layers[activeLayerIndex] else null
+    val isImageLayer = activeLayer?.imagePath != null
 
     Canvas(
         modifier = modifier
@@ -184,95 +187,96 @@ fun FluidCanvas(
             )
         }
 
-        with(drawContext.canvas) {
-            saveLayer(
-                bounds = androidx.compose.ui.geometry.Rect(
-                    0f,
-                    0f,
-                    canvasWidth.toFloat(),
-                    canvasHeight.toFloat()
-                ),
-                paint = Paint()
-            )
-            // Clip to canvas page
-            clipRect(0f, 0f, canvasWidth.toFloat(), canvasHeight.toFloat())
+        // Clip to canvas page
+        clipRect(0f, 0f, canvasWidth.toFloat(), canvasHeight.toFloat()) {
 
             // layers
             layers.forEach { layer ->
                 if (layer.isVisible) {
-                    if (layer.imagePath != null) {
-                        val bitmapToDraw = layerBitmaps[layer.id]
-                        if (bitmapToDraw != null) {
-                            withTransform({
-                                translate(layer.imageOffset.x, layer.imageOffset.y)
-                                scale(layer.imageScale)
-                                rotate(layer.imageRotation)
-                            }) {
-                                drawImage(
-                                    image = bitmapToDraw,
-                                    alpha = layer.opacity
+                    with(drawContext.canvas) {
+
+                        saveLayer(
+                            bounds = androidx.compose.ui.geometry.Rect(
+                                0f,
+                                0f,
+                                canvasWidth.toFloat(),
+                                canvasHeight.toFloat()
+                            ),
+                            paint = Paint()
+                        )
+
+                        if (layer.imagePath != null) {
+                            val bitmapToDraw = layerBitmaps[layer.id]
+                            if (bitmapToDraw != null) {
+                                withTransform({
+                                    translate(layer.imageOffset.x, layer.imageOffset.y)
+                                    scale(layer.imageScale)
+                                    rotate(layer.imageRotation)
+                                }) {
+                                    drawImage(
+                                        image = bitmapToDraw,
+                                        alpha = layer.opacity
+                                    )
+                                }
+                            }
+                        }
+
+                        layer.strokes.forEach { stroke ->
+                            val pathPoints = stroke.points.map { Offset(it.x, it.y) }
+
+                            val isEraser = stroke.brushStyle.brushType == BrushType.ERASER
+
+                            if (pathPoints.isNotEmpty()) {
+                                val strokePath = BezierSmoother.createSmoothPath(pathPoints)
+                                drawPath(
+                                    path = strokePath,
+                                    color = if (isEraser) Color.Black else Color(stroke.brushStyle.colorHex),
+                                    style = Stroke(
+                                        width = stroke.brushStyle.strokeWidth,
+                                        cap = StrokeCap.Round,
+                                        join = StrokeJoin.Round
+                                    ),
+                                    alpha = layer.opacity,
+                                    blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
                                 )
                             }
                         }
-                    }
 
-                    layer.strokes.forEach { stroke ->
-                        val pathPoints = stroke.points.map { Offset(it.x, it.y) }
+                        if (layer.id == activeLayer?.id && canvasState.currentPathPoints.isNotEmpty()) {
+                            val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
+                            val isEraser = currentBrushStyle.brushType == BrushType.ERASER
 
-                        val isEraser = stroke.brushStyle.brushType == BrushType.ERASER
-
-                        if (pathPoints.isNotEmpty()) {
-                            val strokePath = BezierSmoother.createSmoothPath(pathPoints)
                             drawPath(
-                                path = strokePath,
-                                color = if (isEraser) Color.Black else Color(stroke.brushStyle.colorHex),
+                                path = activePath,
+                                color = if (isEraser) Color.Black else Color(currentBrushStyle.colorHex),
                                 style = Stroke(
-                                    width = stroke.brushStyle.strokeWidth,
+                                    width = updatedBrushStyle.strokeWidth,
                                     cap = StrokeCap.Round,
                                     join = StrokeJoin.Round
                                 ),
-                                alpha = layer.opacity,
                                 blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
                             )
                         }
+
+                        restore()
                     }
                 }
             }
+        }
 
-            // current path
-            if (canvasState.currentPathPoints.isNotEmpty()) {
-                val activePath = BezierSmoother.createSmoothPath(canvasState.currentPathPoints)
-                val isEraser = currentBrushStyle.brushType == BrushType.ERASER
-
-                drawPath(
-                    path = activePath,
-                    color = if (isEraser) Color.Black else Color(currentBrushStyle.colorHex),
-                    style = Stroke(
-                        width = updatedBrushStyle.strokeWidth,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
-                    ),
-                    blendMode = if (isEraser) BlendMode.Clear else BlendMode.SrcOver
-                )
-
-                // 4. Render Virtual Reticle Pointer (Crosshair) Over Screen
-                if (isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
-                    val currentTarget = canvasState.currentPathPoints.last()
-                    drawCircle(
-                        color = Color.Red,
-                        radius = 8f,
-                        center = currentTarget
-                    )
-                    drawCircle(
-                        color = Color.Red,
-                        radius = 24f,
-                        center = currentTarget,
-                        style = Stroke(width = 2f)
-                    )
-                }
-            }
-
-            restore()
+        if (isReticleEnabled && canvasState.currentPathPoints.isNotEmpty()) {
+            val currentTarget = canvasState.currentPathPoints.last()
+            drawCircle(
+                color = Color.Red,
+                radius = 8f,
+                center = currentTarget
+            )
+            drawCircle(
+                color = Color.Red,
+                radius = 24f,
+                center = currentTarget,
+                style = Stroke(width = 2f)
+            )
         }
     }
 }

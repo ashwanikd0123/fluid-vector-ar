@@ -48,7 +48,7 @@ class EditorScreenViewModel @Inject constructor(
         val currentLayers = editorState.value.layers
 
         viewModelScope.launch(Dispatchers.IO) {
-            editorState.update { it.copy(isSavingProject = true) }
+            setSaving(true)
             try {
                 val updatedProject = currentProject.copy(updatedAt = System.currentTimeMillis())
                 drawingRepo.addProject(updatedProject)
@@ -67,7 +67,7 @@ class EditorScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                editorState.update { it.copy(isSavingProject = false) }
+                setSaving(false)
             }
         }
     }
@@ -75,13 +75,7 @@ class EditorScreenViewModel @Inject constructor(
     fun loadProject(projectId: String) {
         viewModelScope.launch {
 
-            editorState.update {
-                EditorUiState(
-                    isLoadingProject = true,
-                    layers = emptyList(),
-                    activeLayerIndex = 0
-                )
-            }
+            setLoading(true)
 
             val project = withContext(Dispatchers.IO) {
                 drawingRepo.getProject(projectId)
@@ -106,13 +100,15 @@ class EditorScreenViewModel @Inject constructor(
 
             editorState.update {
                 it.copy(
-                    isLoadingProject = false,
                     layers = layers,
                     activeLayerIndex = 0
                 )
             }
+
+            setLoading(false)
         }
     }
+
     fun setLoading(isLoading: Boolean) {
         editorState.update { it.copy(isLoadingProject = isLoading) }
     }
