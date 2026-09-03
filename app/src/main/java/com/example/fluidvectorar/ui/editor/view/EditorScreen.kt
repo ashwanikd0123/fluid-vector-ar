@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -60,7 +61,6 @@ import com.example.fluidvectorar.ui.editor.state.SettingDialogState
 import com.example.fluidvectorar.ui.editor.utils.saveImageAndCalculateCenter
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -133,7 +133,7 @@ fun EditorScreen(
         },
         layers = editorState.layers,
         activeLayerIndex = editorState.activeLayerIndex,
-        updateActiveImageTransform = { centroid, pan, zoom, rotation ->
+        updateActiveImageTransform = { _, pan, zoom, rotation ->
             viewModel.updateActiveImageTransform(pan, zoom, rotation)
         },
         onAddLayer = { layerName ->
