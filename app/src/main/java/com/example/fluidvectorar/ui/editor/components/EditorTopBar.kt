@@ -1,12 +1,12 @@
 package com.example.fluidvectorar.ui.editor.components
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
@@ -59,19 +59,11 @@ fun EditorTopBar(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clickable { expanded = !expanded }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Box(modifier = Modifier.padding(horizontal = 4.dp)) {
+                IconButton(
+                    onClick = { expanded = !expanded },
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_save),
-                        contentDescription = "Menu",
-                        tint = Color.DarkGray
-                    )
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
                         contentDescription = "Expand menu",
@@ -126,21 +118,30 @@ fun EditorTopBar(
                 modifier = Modifier.padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onUndoClick) {
+                IconButton(
+                    onClick = onUndoClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_undo),
                         contentDescription = "Undo",
                         tint = Color.DarkGray
                     )
                 }
-                IconButton(onClick = onRedoClick) {
+                IconButton(
+                    onClick = onRedoClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_redo),
                         contentDescription = "Redo",
                         tint = Color.DarkGray
                     )
                 }
-                IconButton(onClick = onToggleReticle) {
+                IconButton(
+                    onClick = onToggleReticle,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_reticle),
                         contentDescription = "Toggle Reticle",
