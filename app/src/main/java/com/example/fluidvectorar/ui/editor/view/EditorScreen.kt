@@ -1,5 +1,8 @@
 package com.example.fluidvectorar.ui.editor.view
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -24,11 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -45,8 +52,11 @@ import com.example.fluidvectorar.ui.editor.components.LayerManagementPanel
 import com.example.fluidvectorar.ui.editor.state.CanvasGestureState
 import com.example.fluidvectorar.ui.editor.state.CanvasUIConfigState
 import com.example.fluidvectorar.ui.editor.state.SettingDialogState
+import com.example.fluidvectorar.ui.editor.utils.saveImageAndCalculateCenter
 import com.example.fluidvectorar.ui.editor.viewmodel.EditorScreenViewModel
 import com.example.fluidvectorar.ui.theme.FluidVectorARTheme
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -57,9 +67,42 @@ fun EditorScreen(
 
     val editorState by viewModel.editorState.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            coroutineScope.launch {
+                viewModel.setImportingImage(true)
+                val result = saveImageAndCalculateCenter(
+                    context = context,
+                    uri = uri,
+                    canvasWidth = screenWidthPx,
+                    canvasHeight = screenHeightPx
+                )
+
+                if (result != null) {
+                    val (path, offset) = result
+                    viewModel.addImageLayer(path, offset)
+                }
+                viewModel.setImportingImage(false)
+            }
+        }
+    }
+
     EditorScreenView(
         onSaveClick = {
             viewModel.saveProject()
+        },
+        onImportImageClick = {
+            photoPickerLauncher.launch("image/*")
         },
         onUndoClick = {
             viewModel.undo()
@@ -89,7 +132,7 @@ fun EditorScreen(
         },
         canvasWidth = editorState.project?.canvasWidth ?: 1080,
         canvasHeight = editorState.project?.canvasHeight ?: 1960,
-        isSavingProject = editorState.isSavingProject
+        showCircularProgress = editorState.isLoadingProject || editorState.isSavingProject || editorState.isImportingImage
     )
 }
 
@@ -97,6 +140,7 @@ fun EditorScreen(
 @Composable
 fun EditorScreenView(
     onSaveClick: () -> Unit = {},
+    onImportImageClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onRedoClick: () -> Unit = {},
     spitStroke: (StrokeData) -> Unit = {},
@@ -109,7 +153,7 @@ fun EditorScreenView(
     onReorderLayers: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> },
     canvasWidth: Int = 1080,
     canvasHeight: Int = 1960,
-    isSavingProject: Boolean = false,
+    showCircularProgress: Boolean = false,
 ) {
     Box(
         modifier = Modifier
@@ -141,6 +185,7 @@ fun EditorScreenView(
             onUndoClick = { onUndoClick() },
             onRedoClick = { onRedoClick() },
             onSaveClick = onSaveClick,
+            onImportImageClick = onImportImageClick,
             isReticleEnabled = canvasUIConfigState.isReticleEnabled,
             onToggleReticle = {
                 canvasUIConfigState.isReticleEnabled = !canvasUIConfigState.isReticleEnabled
@@ -219,7 +264,7 @@ fun EditorScreenView(
             )
         }
 
-        if (isSavingProject) {
+        if (showCircularProgress) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

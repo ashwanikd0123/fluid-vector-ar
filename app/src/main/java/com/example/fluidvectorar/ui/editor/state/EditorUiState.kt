@@ -10,6 +10,7 @@ data class EditorUiState(
 
     val isLoadingProject: Boolean = true,
     val isSavingProject: Boolean = false,
+    val isImportingImage: Boolean = false,
 
     val layers: List<LayerState> = listOf(),
     val activeLayerIndex: Int = 0,

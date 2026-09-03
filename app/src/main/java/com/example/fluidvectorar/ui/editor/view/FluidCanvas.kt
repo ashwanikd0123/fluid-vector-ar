@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -55,12 +56,13 @@ fun FluidCanvas(
     val updatedSpitStroke by rememberUpdatedState(spitStroke)
     val updatedIsReticleEnabled by rememberUpdatedState(isReticleEnabled)
 
-    val layerBitmaps = remember { mutableMapOf<String, ImageBitmap?>() }
-
+    val layerBitmaps = remember { mutableStateMapOf<String, ImageBitmap?>() }
     layers.forEach { layer ->
         key(layer.id) {
             val bitmap = rememberImageBitmapFromPath(path = layer.imagePath)
-            layerBitmaps[layer.id] = bitmap
+            LaunchedEffect(bitmap) {
+                layerBitmaps[layer.id] = bitmap
+            }
         }
     }
 

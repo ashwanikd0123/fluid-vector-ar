@@ -1,6 +1,7 @@
 package com.example.fluidvectorar.ui.editor.viewmodel
 
 
+import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -110,6 +111,39 @@ class EditorScreenViewModel @Inject constructor(
                     activeLayerIndex = 0
                 )
             }
+        }
+    }
+    fun setLoading(isLoading: Boolean) {
+        editorState.update { it.copy(isLoadingProject = isLoading) }
+    }
+
+    fun setSaving(isSaving: Boolean) {
+        editorState.update { it.copy(isSavingProject = isSaving) }
+    }
+
+    fun setImportingImage(isImporting: Boolean) {
+        editorState.update { it.copy(isImportingImage = isImporting) }
+    }
+
+    fun addImageLayer(imagePath: String, centerOffset: Offset) {
+        editorState.update { oldState ->
+            val newLayer = LayerState(
+                id = UUID.randomUUID().toString(),
+                name = "Image Layer",
+                imagePath = imagePath,
+                imageOffset = centerOffset,
+                imageScale = 1f,
+                imageRotation = 0f
+            )
+
+            val mutableLayers = oldState.layers.toMutableList()
+            val insertIndex = (oldState.activeLayerIndex + 1).coerceAtMost(mutableLayers.size)
+            mutableLayers.add(insertIndex, newLayer)
+
+            oldState.copy(
+                layers = mutableLayers.toList(),
+                activeLayerIndex = insertIndex
+            )
         }
     }
 
